@@ -37,8 +37,8 @@ export async function renderRsc(
   const resolveClientEntry = ctx.unstable_devServer
     ? ctx.unstable_devServer.resolveClientEntry
     : resolveClientEntryForPrd;
-  // @ts-ignore
-  const clientBundlerConfig = new Proxy(
+  // @ts-expect-error might not need this
+  const _clientBundlerConfig = new Proxy(
     {},
     {
       get(_target, encodedId: string) {
@@ -49,19 +49,21 @@ export async function renderRsc(
       },
     },
   );
-  return renderToReadableStream(elements,
+  return renderToReadableStream(
+    elements,
     // clientBundlerConfig,
     {
-    onError: (err: unknown) => {
-      console.log(err);
-      onError.forEach((fn) => fn(err, ctx as HandlerContext, 'rsc'));
-      if (typeof (err as any)?.digest === 'string') {
-        // This is not correct according to the type though.
-        return (err as { digest: string }).digest;
-      }
+      onError: (err: unknown) => {
+        console.log(err);
+        onError.forEach((fn) => fn(err, ctx as HandlerContext, 'rsc'));
+        if (typeof (err as any)?.digest === 'string') {
+          // This is not correct according to the type though.
+          return (err as { digest: string }).digest;
+        }
+      },
+      temporaryReferences: temporaryReferencesMap.get(ctx),
     },
-    temporaryReferences: temporaryReferencesMap.get(ctx),
-  });
+  );
 }
 
 export function renderRscElement(
@@ -80,8 +82,8 @@ export function renderRscElement(
   const resolveClientEntry = ctx.unstable_devServer
     ? ctx.unstable_devServer.resolveClientEntry
     : resolveClientEntryForPrd;
-  // @ts-ignore
-  const clientBundlerConfig = new Proxy(
+  // @ts-expect-error might not need this
+  const _clientBundlerConfig = new Proxy(
     {},
     {
       get(_target, encodedId: string) {
@@ -91,18 +93,20 @@ export function renderRscElement(
       },
     },
   );
-  return renderToReadableStream(element,
+  return renderToReadableStream(
+    element,
     // clientBundlerConfig,
     {
-    onError: (err: unknown) => {
-      onError.forEach((fn) => fn(err, ctx as HandlerContext, 'rsc'));
-      if (typeof (err as any)?.digest === 'string') {
-        // This is not correct according to the type though.
-        return (err as { digest: string }).digest;
-      }
+      onError: (err: unknown) => {
+        onError.forEach((fn) => fn(err, ctx as HandlerContext, 'rsc'));
+        if (typeof (err as any)?.digest === 'string') {
+          // This is not correct according to the type though.
+          return (err as { digest: string }).digest;
+        }
+      },
+      temporaryReferences: temporaryReferencesMap.get(ctx),
     },
-    temporaryReferences: temporaryReferencesMap.get(ctx),
-  });
+  );
 }
 
 export async function collectClientModules(
@@ -114,8 +118,8 @@ export async function collectClientModules(
     default: { renderToReadableStream },
   } = rsdwServer;
   const idSet = new Set<string>();
-  // @ts-ignore
-  const clientBundlerConfig = new Proxy(
+  // @ts-expect-error might not need this
+  const _clientBundlerConfig = new Proxy(
     {},
     {
       get(_target, encodedId: string) {
@@ -126,7 +130,8 @@ export async function collectClientModules(
       },
     },
   );
-  const readable = renderToReadableStream(elements,
+  const readable = renderToReadableStream(
+    elements,
     // clientBundlerConfig
   );
   await new Promise<void>((resolve, reject) => {
@@ -154,8 +159,8 @@ export async function decodeBody(
   const {
     default: { decodeReply, createTemporaryReferenceSet },
   } = modules.rsdwServer as { default: typeof RSDWServerType };
-  // @ts-ignore
-  const serverBundlerConfig = new Proxy(
+  // @ts-expect-error might not need this
+  const _serverBundlerConfig = new Proxy(
     {},
     {
       get(_target, encodedId: string) {
@@ -177,18 +182,22 @@ export async function decodeBody(
     ) {
       // XXX This doesn't support streaming unlike busboy
       const formData = await parseFormData(bodyBuf, contentType);
-      decodedBody = await decodeReply(formData,
+      decodedBody = await decodeReply(
+        formData,
         // serverBundlerConfig,
         {
-        temporaryReferences,
-      });
+          temporaryReferences,
+        },
+      );
     } else if (bodyBuf.byteLength > 0) {
       const bodyStr = bufferToString(bodyBuf);
-      decodedBody = await decodeReply(bodyStr,
+      decodedBody = await decodeReply(
+        bodyStr,
         // serverBundlerConfig,
         {
-        temporaryReferences,
-      });
+          temporaryReferences,
+        },
+      );
     }
   }
   return decodedBody;
@@ -249,8 +258,8 @@ export async function decodePostAction(
         // Assuming this is probably for api
         return null;
       }
-      // @ts-ignore
-      const serverBundlerConfig = new Proxy(
+      // @ts-expect-error might not need this
+      const _serverBundlerConfig = new Proxy(
         {},
         {
           get(_target, encodedId: string) {
@@ -261,11 +270,14 @@ export async function decodePostAction(
         },
       );
       setExtractFormState(ctx, (actionResult) =>
-        decodeFormState(actionResult, formData,
+        decodeFormState(
+          actionResult,
+          formData,
           // serverBundlerConfig
         ),
       );
-      return decodeAction(formData,
+      return decodeAction(
+        formData,
         // serverBundlerConfig
       );
     }

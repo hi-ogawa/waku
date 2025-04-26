@@ -28,8 +28,8 @@ const { createFromFetch, encodeReply, createTemporaryReferenceSet } =
   } else {
     id = '/' + id + '.js';
   }
-  return (globalThis as any).__WAKU_CLIENT_IMPORT__(id)
-})
+  return (globalThis as any).__WAKU_CLIENT_IMPORT__(id);
+});
 
 declare global {
   interface ImportMeta {

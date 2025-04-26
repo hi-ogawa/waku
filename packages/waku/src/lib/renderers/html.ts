@@ -182,11 +182,16 @@ export async function renderHtml(
   } = modules.rsdwClient as { default: typeof RSDWClientType };
 
   // previously normalized through clientBundlerConfig and serverConsumerManifest.moduleMap
-  const resolveClientEntryForPrd = (id: string, config: { basePath: string }) => {
+  const resolveClientEntryForPrd = (
+    id: string,
+    config: { basePath: string },
+  ) => {
     return config.basePath + id + '.js';
   };
   function normalizeModuleId(id: string) {
-    id = ctx.unstable_devServer ? ctx.unstable_devServer.resolveClientEntry(id) : resolveClientEntryForPrd(id, config);
+    id = ctx.unstable_devServer
+      ? ctx.unstable_devServer.resolveClientEntry(id)
+      : resolveClientEntryForPrd(id, config);
     if (ctx.unstable_devServer) {
       id = id.slice(config.basePath.length);
       if (id.startsWith('@id/')) {
@@ -196,14 +201,14 @@ export async function renderHtml(
       } else {
         id = filePathToFileURL(id);
       }
-      return id
+      return id;
     }
     // !isDev
     id = id.slice(config.basePath.length);
-    return id
+    return id;
   }
   (modules.rsdwClient as any).default.setPreloadModule((id: string) => {
-    return (globalThis as any).__WAKU_CLIENT_IMPORT__(normalizeModuleId(id))
+    return (globalThis as any).__WAKU_CLIENT_IMPORT__(normalizeModuleId(id));
   });
 
   const { INTERNAL_ServerRoot } =

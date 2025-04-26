@@ -107,7 +107,8 @@ export const handler: Middleware = (options) => {
         )
       : await entriesPrd.loadModule(CLIENT_PREFIX + 'waku-minimal-client');
     (rsdwServer as any).default.setPreloadModule((id: string) =>
-      (globalThis as any).__WAKU_SERVER_IMPORT__(id))
+      (globalThis as any).__WAKU_SERVER_IMPORT__(id),
+    );
     ctx.unstable_modules = {
       rsdwServer,
       rdServer,

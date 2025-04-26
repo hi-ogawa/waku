@@ -1,6 +1,7 @@
 import type { Plugin } from 'vite';
 
-const patchRsdw = (code: string, type: 'SERVER' | 'CLIENT') => {
+// @ts-expect-error might not need this
+const _patchRsdw = (code: string, type: 'SERVER' | 'CLIENT') => {
   code = code.replace(
     /__webpack_(\w+)__/g,
     (_, p1) => `__WAKU_${type}_${p1.toUpperCase()}__`,
@@ -54,8 +55,9 @@ export function rscRsdwPlugin(): Plugin {
         return this.resolve(id, importer, options);
       }
     },
-    transform(code, id) {
-      if (1) return;
+    transform(_code, _id) {
+      return;
+      /* Moved
       const [file, opt] = id.split('?');
       if (
         ['commonjs-exports', 'commonjs-proxy', 'commonjs-entry'].includes(opt!)
@@ -86,6 +88,7 @@ export function rscRsdwPlugin(): Plugin {
       if (code.includes('function requireAsyncModule(id)')) {
         throw new Error('rscRsdwPlugin: Untransformed file: ' + file);
       }
+      */
     },
   };
 }
