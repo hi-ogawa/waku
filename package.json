@@ -29,7 +29,7 @@
   "devDependencies": {
     "@actions/core": "^1.11.1",
     "@eslint/js": "^9.28.0",
-    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@925ad29",
+    "@hiogawa/vite-rsc": "0.4.4",
     "@playwright/test": "^1.53.0",
     "@types/babel__core": "^7.20.5",
     "@types/node": "^22.15.29",
