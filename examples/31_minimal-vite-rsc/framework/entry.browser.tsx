@@ -2,18 +2,19 @@ import * as ReactClient from '@hiogawa/vite-rsc/browser';
 import { getRscStreamFromHtml } from '@hiogawa/vite-rsc/rsc-html-stream/browser';
 import React from 'react';
 import * as ReactDOMClient from 'react-dom/client';
-import type { RscPayload } from './entry.rsc';
+import type { RscElementsPayload } from './entry.rsc';
 
 async function main() {
   // stash `setPayload` function to trigger re-rendering
   // from outside of `BrowserRoot` component (e.g. server function call, navigation, hmr)
-  let setPayload: (v: RscPayload) => void;
+  let setPayload: (v: RscElementsPayload) => void;
 
   // deserialize RSC stream back to React VDOM for CSR
-  const initialPayload = await ReactClient.createFromReadableStream<RscPayload>(
-    // initial RSC stream is injected in SSR stream as <script>...FLIGHT_DATA...</script>
-    getRscStreamFromHtml(),
-  );
+  const initialPayload =
+    await ReactClient.createFromReadableStream<RscElementsPayload>(
+      // initial RSC stream is injected in SSR stream as <script>...FLIGHT_DATA...</script>
+      getRscStreamFromHtml(),
+    );
 
   // browser root component to (re-)render RSC payload as state
   function BrowserRoot() {
@@ -33,7 +34,7 @@ async function main() {
 
   // re-fetch RSC and trigger re-rendering
   async function fetchRscPayload() {
-    const payload = await ReactClient.createFromFetch<RscPayload>(
+    const payload = await ReactClient.createFromFetch<RscElementsPayload>(
       fetch(window.location.href),
     );
     setPayload(payload);
@@ -44,7 +45,7 @@ async function main() {
   ReactClient.setServerCallback(async (id, args) => {
     const url = new URL(window.location.href);
     const temporaryReferences = ReactClient.createTemporaryReferenceSet();
-    const payload = await ReactClient.createFromFetch<RscPayload>(
+    const payload = await ReactClient.createFromFetch<RscElementsPayload>(
       fetch(url, {
         method: 'POST',
         body: await ReactClient.encodeReply(args, { temporaryReferences }),

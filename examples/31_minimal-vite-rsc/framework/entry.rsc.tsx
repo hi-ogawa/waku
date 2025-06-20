@@ -2,10 +2,8 @@ import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import wakuServerEntry from '../src/server-entry';
 
 // packages/waku/src/lib/renderers/html.ts
-export type RscPayload = {
-  elements: Record<string, unknown>;
-  html?: React.ReactNode;
-};
+export type RscElementsPayload = Record<string, unknown>;
+export type RscHtmlPayload = React.ReactNode;
 
 export default async function handler(request: Request): Promise<Response> {
   // cf. packages/waku/src/lib/middleware/handler.ts
@@ -31,9 +29,7 @@ export default async function handler(request: Request): Promise<Response> {
       async renderRsc(elements, options) {
         // console.log('[renderRsc]', { elements, options });
 
-        return ReactServer.renderToReadableStream<RscPayload['elements']>(
-          elements,
-        );
+        return ReactServer.renderToReadableStream<RscElementsPayload>(elements);
       },
 
       async renderHtml(elements, html, options) {
@@ -43,13 +39,17 @@ export default async function handler(request: Request): Promise<Response> {
           typeof import('./entry.ssr.tsx')
         >('ssr', 'index');
 
-        const rscStream = ReactServer.renderToReadableStream<RscPayload>({
-          elements,
-          html,
-        });
-        const htmlStream = await ssrEntryModule.renderHTML(rscStream, {
-          debugNojs: url.searchParams.has('__nojs'),
-        });
+        const rscElementsStream =
+          ReactServer.renderToReadableStream<RscElementsPayload>(elements);
+        const rscHtmlStream =
+          ReactServer.renderToReadableStream<RscHtmlPayload>(html);
+        const htmlStream = await ssrEntryModule.renderHTML(
+          rscElementsStream,
+          rscHtmlStream,
+          {
+            debugNojs: url.searchParams.has('__nojs'),
+          },
+        );
         return {
           body: htmlStream as any,
           headers: { 'content-type': 'text/html' },
