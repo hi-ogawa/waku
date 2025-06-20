@@ -5,6 +5,7 @@ import React from 'react';
 import type { ReactFormState } from 'react-dom/client';
 import * as ReactDOMServer from 'react-dom/server.edge';
 import type { RscPayload } from './entry.rsc';
+import { INTERNAL_ServerRoot } from 'waku/minimal/client';
 
 export async function renderHTML(
   rscStream: ReadableStream<Uint8Array>,
@@ -21,11 +22,19 @@ export async function renderHTML(
 
   // deserialize RSC stream back to React VDOM
   let payload: Promise<RscPayload>;
+  let elementsPromise: Promise<RscPayload['elements']>;
+
   function SsrRoot() {
     // deserialization needs to be kicked off inside ReactDOMServer context
     // for ReactDomServer preinit/preloading to work
     payload ??= ReactClient.createFromReadableStream<RscPayload>(stream1);
-    return React.use(payload).root;
+    const resolved = React.use(payload);
+    elementsPromise ??= Promise.resolve(resolved.elements);
+    return (
+      <INTERNAL_ServerRoot elementsPromise={elementsPromise}>
+        {resolved.html}
+      </INTERNAL_ServerRoot>
+    );
   }
 
   // render html (traditional SSR)

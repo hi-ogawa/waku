@@ -5,8 +5,6 @@ import * as ReactDOMClient from 'react-dom/client';
 import type { RscPayload } from './entry.rsc';
 
 async function main() {
-  if (1) return;
-
   // stash `setPayload` function to trigger re-rendering
   // from outside of `BrowserRoot` component (e.g. server function call, navigation, hmr)
   let setPayload: (v: RscPayload) => void;
@@ -30,7 +28,7 @@ async function main() {
       return listenNavigation(() => fetchRscPayload());
     }, []);
 
-    return payload.root;
+    // return payload.root;
   }
 
   // re-fetch RSC and trigger re-rendering
@@ -57,17 +55,15 @@ async function main() {
       { temporaryReferences },
     );
     setPayload(payload);
-    return payload.returnValue;
+    // return payload.returnValue;
   });
 
   // hydration
   const browserRoot = (
-    <React.StrictMode>
-      <BrowserRoot />
-    </React.StrictMode>
+    <React.StrictMode>{/* <BrowserRoot /> */}</React.StrictMode>
   );
   ReactDOMClient.hydrateRoot(document, browserRoot, {
-    formState: initialPayload.formState,
+    // formState: initialPayload.formState,
   });
 
   // implement server HMR by trigering re-fetch/render of RSC upon server code change

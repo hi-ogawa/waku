@@ -10,8 +10,10 @@ const rootElement = (
   </StrictMode>
 );
 
-if ((globalThis as any).__WAKU_HYDRATE__) {
-  hydrateRoot(document, rootElement);
-} else {
-  createRoot(document as any).render(rootElement);
-}
+(globalThis as any).__WAKU_HYDRATE__ = true;
+
+// if ((globalThis as any).__WAKU_HYDRATE__) {
+//   hydrateRoot(document, rootElement);
+// } else {
+//   createRoot(document as any).render(rootElement);
+// }

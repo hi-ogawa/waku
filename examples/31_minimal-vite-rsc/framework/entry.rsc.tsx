@@ -1,48 +1,32 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
-import type { ReactFormState } from 'react-dom/client';
-// import { Root } from "../root.tsx";
-const Root = () => (
-  <html>
-    <body>hello</body>
-  </html>
-);
+import wakuServerEntry from '../src/server-entry';
 
-// The schema of payload which is serialized into RSC stream on rsc environment
-// and deserialized on ssr/client environments.
 export type RscPayload = {
-  // this demo renders/serializes/deserizlies entire root html element
-  // but this mechanism can be changed to render/fetch different parts of components
-  // based on your own route conventions.
-  root: React.ReactNode;
-  // server action return value of non-progressive enhancement case
-  returnValue?: unknown;
-  // server action form state (e.g. useActionState) of progressive enhancement case
-  formState?: ReactFormState;
+  html: React.ReactNode;
+  elements: Record<string, unknown>;
 };
 
 // the plugin by default assumes `rsc` entry having default export of request handler.
 // however, how server entries are executed can be customized by registering
 // own server handler e.g. `@cloudflare/vite-plugin`.
 export default async function handler(request: Request): Promise<Response> {
-  const wakuServerEntry = await import('../src/server-entry');
+  const url = new URL(request.url);
 
-  const ssrEntryModule = await import.meta.viteRsc.loadModule<
-    typeof import('./entry.ssr.tsx')
-  >('ssr', 'index');
+  const wakuResult = await wakuServerEntry.handleRequest(
+    // TODO: `type: 'component'`
+    { type: 'custom', pathname: url.pathname, req: request as any },
 
-  const wakuResult = await wakuServerEntry.default.handleRequest(
-    // ssr input
-    { type: 'custom', pathname: '/', req: {} as any },
-    // handlers implementation based on vite-rsc
     {
       async renderRsc(elements, options) {
-        console.log('[renderRsc]', { elements, options });
-        return ReactServer.renderToReadableStream({ elements, options });
-      },
-      async renderHtml(elements, html, options) {
-        console.log('[renderHtml]', { elements, html, options });
+        // console.log('[renderRsc]', { elements, options });
 
-        // TODO: root document API
+        return ReactServer.renderToReadableStream({ elements });
+      },
+
+      async renderHtml(elements, html, options) {
+        // console.log('[renderHtml]', { elements, html, options });
+
+        // TODO: root element API
         html = (
           <html>
             <title>waku-vite-rsc</title>
@@ -50,12 +34,17 @@ export default async function handler(request: Request): Promise<Response> {
           </html>
         );
 
-        const rscStream = ReactServer.renderToReadableStream({
+        const ssrEntryModule = await import.meta.viteRsc.loadModule<
+          typeof import('./entry.ssr.tsx')
+        >('ssr', 'index');
+
+        const rscStream = ReactServer.renderToReadableStream<RscPayload>({
           elements,
           html,
-          options,
         });
-        const htmlStream = await ssrEntryModule.renderHTML(rscStream);
+        const htmlStream = await ssrEntryModule.renderHTML(rscStream, {
+          debugNojs: url.searchParams.has('__nojs'),
+        });
         return {
           body: htmlStream as any,
           headers: { 'content-type': 'text/html' },
@@ -63,11 +52,21 @@ export default async function handler(request: Request): Promise<Response> {
       },
     },
   );
-  const body =
-    wakuResult instanceof ReadableStream
-      ? wakuResult
-      : (wakuResult?.body ?? '[not-found]');
-  return new Response(body);
+
+  let response: Response;
+  if (wakuResult) {
+    if (wakuResult instanceof ReadableStream) {
+      response = new Response(wakuResult);
+    } else if (wakuResult.body) {
+      response = new Response(wakuResult.body, {
+        headers: {
+          'content-type': 'text/html',
+        },
+      });
+    }
+  }
+  response ??= new Response('[not-found]');
+  return response;
 
   // handle server function request
   // const isAction = request.method === 'POST';
