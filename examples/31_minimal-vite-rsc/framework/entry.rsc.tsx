@@ -1,22 +1,21 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import wakuServerEntry from '../src/server-entry';
 
+// packages/waku/src/lib/renderers/html.ts
 export type RscPayload = {
   elements: Record<string, unknown>;
   html?: React.ReactNode;
 };
 
-// the plugin by default assumes `rsc` entry having default export of request handler.
-// however, how server entries are executed can be customized by registering
-// own server handler e.g. `@cloudflare/vite-plugin`.
 export default async function handler(request: Request): Promise<Response> {
+  // cf. packages/waku/src/lib/middleware/handler.ts
+
+  // TODO: getInput
   const url = new URL(request.url);
   const isRscRequest =
     (!request.headers.get('accept')?.includes('text/html') &&
       !url.searchParams.has('__html')) ||
     url.searchParams.has('__rsc');
-
-  // TODO: port `handleRequest` inputs construction
 
   const wakuResult = await wakuServerEntry.handleRequest(
     isRscRequest

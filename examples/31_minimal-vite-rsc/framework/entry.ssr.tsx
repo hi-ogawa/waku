@@ -15,18 +15,15 @@ export async function renderHTML(
     debugNojs?: boolean;
   },
 ) {
-  // duplicate one RSC stream into two.
-  // - one for SSR (ReactClient.createFromReadableStream below)
-  // - another for browser hydration payload by injecting <script>...FLIGHT_DATA...</script>.
+  // cf. packages/waku/src/lib/renderers/html.ts
+
   const [stream1, stream2] = rscStream.tee();
 
-  // deserialize RSC stream back to React VDOM
   let payload: Promise<RscPayload>;
   let elementsPromise: Promise<RscPayload['elements']>;
 
+  // deserialize RSC stream back to React VDOM
   function SsrRoot() {
-    // deserialization needs to be kicked off inside ReactDOMServer context
-    // for ReactDomServer preinit/preloading to work
     payload ??= ReactClient.createFromReadableStream<RscPayload>(stream1);
     const resolved = React.use(payload);
     elementsPromise ??= Promise.resolve(resolved.elements);
@@ -41,15 +38,16 @@ export async function renderHTML(
   const htmlStream = await ReactDOMServer.renderToReadableStream(<SsrRoot />, {
     bootstrapScriptContent: options?.debugNojs
       ? undefined
-      : `globalThis.__WAKU_HYDRATE__ = true;` + bootstrapScriptContent,
+      : getBootstrapPreamble({ rscPathForFakeFetch: '' }) +
+        bootstrapScriptContent,
     nonce: options?.nonce,
     // no types
     ...{ formState: options?.formState },
   });
 
+  // TODO: initial hydraton stream is only `elements` part of payload without `html`
   let responseStream: ReadableStream = htmlStream;
   if (!options?.debugNojs) {
-    // initial RSC stream is injected in HTML stream as <script>...FLIGHT_DATA...</script>
     responseStream = responseStream.pipeThrough(
       injectRscStreamToHtml(stream2, {
         nonce: options?.nonce,
@@ -59,3 +57,30 @@ export async function renderHTML(
 
   return responseStream;
 }
+
+// cf. packages/waku/src/lib/renderers/html.ts
+function getBootstrapPreamble(options: { rscPathForFakeFetch: string }) {
+  return `
+    globalThis.__WAKU_HYDRATE__ = true;
+    globalThis.__WAKU_PREFETCHED__ = {
+      ${JSON.stringify(options.rscPathForFakeFetch)}: ${FAKE_FETCH_CODE}
+    };
+  `;
+}
+
+const FAKE_FETCH_CODE = `
+Promise.resolve(new Response(new ReadableStream({
+  start(c) {
+    const d = (self.__FLIGHT_DATA ||= []);
+    const t = new TextEncoder();
+    const f = (s) => c.enqueue(typeof s === 'string' ? t.encode(s) : s);
+    d.forEach(f);
+    d.push = f;
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => c.close());
+    } else {
+      c.close();
+    }
+  }
+})))
+`;
