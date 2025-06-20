@@ -1,5 +1,6 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import wakuServerEntry from '../src/server-entry';
+import { ReactFormState } from 'react-dom/client';
 
 export type RscElementsPayload = Record<string, unknown>;
 export type RscHtmlPayload = React.ReactNode;
@@ -30,38 +31,41 @@ export default async function handler(request: Request): Promise<Response> {
     headers: Object.fromEntries(request.headers.entries()),
   };
 
-  // TODO: `getInput`
-  const isRscRequest =
-    (!request.headers.get('accept')?.includes('text/html') &&
-      !url.searchParams.has('__html')) ||
-    url.searchParams.has('__rsc');
-
-  // cf. packages/waku/src/lib/renderers/utils.ts `encodeFuncId`
-  // TODO: decode rscPath
-  // TODO: progressive enhancement
+  // cf. packages/waku/src/lib/middleware/handler.ts `getInput`
+  const rscPathPrefix = import.meta.env.WAKU_CONFIG_BASE_PATH + import.meta.env.WAKU_CONFIG_RSC_BASE + '/';
+  let rscPath: string | undefined;
   let temporaryReferences: unknown | undefined;
   let returnValue: unknown | undefined;
-  if (url.pathname.startsWith('/F/')) {
-    // /F/_<id>/<name>.txt  ==>  <id>#<name
-    const actionId = url.pathname
-      .slice(3, -4)
-      .replace(/\/([^\/]+)$/, '#$1')
-      .replace(/^_/, '');
-    const contentType = request.headers.get('content-type');
-    const body = contentType?.startsWith('multipart/form-data')
-      ? await request.formData()
-      : await request.text();
-    temporaryReferences = ReactServer.createTemporaryReferenceSet();
-    const args = await ReactServer.decodeReply(body, { temporaryReferences });
-    const action = await ReactServer.loadServerAction(actionId);
-    returnValue = await action.apply(null, args);
+  let formState: ReactFormState | undefined;
+  if (url.pathname.startsWith(rscPathPrefix)) {
+    rscPath = decodeRscPath(decodeURI(url.pathname.slice(rscPathPrefix.length)));
+    // server action: js
+    const actionId = decodeFuncId(rscPath);
+    if (actionId) {
+      const contentType = request.headers.get('content-type');
+      const body = contentType?.startsWith('multipart/form-data')
+        ? await request.formData()
+        : await request.text();
+      temporaryReferences = ReactServer.createTemporaryReferenceSet();
+      const args = await ReactServer.decodeReply(body, { temporaryReferences });
+      const action = await ReactServer.loadServerAction(actionId);
+      returnValue = await action.apply(null, args);
+    }
   }
 
-  const input: HandleRequestInput = isRscRequest
+  // server action: no js (progressive enhancement)
+  if (request.method === 'POST') {
+    const formData = await request.formData();
+    const decodedAction = await ReactServer.decodeAction(formData);
+    const result = await decodedAction();
+    formState = await ReactServer.decodeFormState(result, formData);
+  }
+
+  const input: HandleRequestInput = typeof rscPath === 'string'
     ? {
         type: 'component',
-        rscPath: url.pathname,
-        rscParams: {},
+        rscPath,
+        rscParams: url.searchParams,
         req,
       }
     : { type: 'custom', pathname: url.pathname, req };
@@ -112,3 +116,35 @@ export default async function handler(request: Request): Promise<Response> {
   response ??= new Response('[not-found]');
   return response;
 }
+
+// cf. packages/waku/src/lib/renderers/utils.ts
+const decodeRscPath = (rscPath: string) => {
+  if (!rscPath.endsWith('.txt')) {
+    const err = new Error('Invalid encoded rscPath');
+    (err as any).statusCode = 400;
+    throw err;
+  }
+  rscPath = rscPath.slice(0, -'.txt'.length);
+  if (rscPath.startsWith('_')) {
+    rscPath = rscPath.slice(1);
+  }
+  if (rscPath.endsWith('_')) {
+    rscPath = rscPath.slice(0, -1);
+  }
+  return rscPath;
+};
+
+const FUNC_PREFIX = 'F/';
+
+const decodeFuncId = (encoded: string) => {
+  if (!encoded.startsWith(FUNC_PREFIX)) {
+    return null;
+  }
+  const index = encoded.lastIndexOf('/');
+  const file = encoded.slice(FUNC_PREFIX.length, index);
+  const name = encoded.slice(index + 1);
+  if (file.startsWith('_')) {
+    return file.slice(1) + '#' + name;
+  }
+  return file + '#' + name;
+};
