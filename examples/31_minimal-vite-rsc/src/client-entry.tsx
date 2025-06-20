@@ -12,8 +12,8 @@ const rootElement = (
 
 (globalThis as any).__WAKU_HYDRATE__ = true;
 
-// if ((globalThis as any).__WAKU_HYDRATE__) {
-//   hydrateRoot(document, rootElement);
-// } else {
-//   createRoot(document as any).render(rootElement);
-// }
+if ((globalThis as any).__WAKU_HYDRATE__) {
+  hydrateRoot(document, rootElement);
+} else {
+  createRoot(document as any).render(rootElement);
+}
