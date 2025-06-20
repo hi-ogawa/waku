@@ -30,7 +30,9 @@ export default async function handler(request: Request): Promise<Response> {
       async renderRsc(elements, options) {
         // console.log('[renderRsc]', { elements, options });
 
-        return ReactServer.renderToReadableStream<RscPayload>({ elements });
+        return ReactServer.renderToReadableStream<RscPayload['elements']>(
+          elements,
+        );
       },
 
       async renderHtml(elements, html, options) {
