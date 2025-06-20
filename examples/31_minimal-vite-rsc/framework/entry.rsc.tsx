@@ -14,6 +14,27 @@ export default async function handler(request: Request): Promise<Response> {
       !url.searchParams.has('__html')) ||
     url.searchParams.has('__rsc');
 
+  // cf. packages/waku/src/lib/renderers/utils.ts `encodeFuncId`
+  // TODO: decode rscPath
+  // TODO: progressive enhancement
+  let temporaryReferences: unknown | undefined;
+  let returnValue: unknown | undefined;
+  if (url.pathname.startsWith('/F/')) {
+    // /F/_<id>/<name>.txt  ==>  <id>#<name
+    const actionId = url.pathname
+      .slice(3, -4)
+      .replace(/\/([^\/]+)$/, '#$1')
+      .replace(/^_/, '');
+    const contentType = request.headers.get('content-type');
+    const body = contentType?.startsWith('multipart/form-data')
+      ? await request.formData()
+      : await request.text();
+    temporaryReferences = ReactServer.createTemporaryReferenceSet();
+    const args = await ReactServer.decodeReply(body, { temporaryReferences });
+    const action = await ReactServer.loadServerAction(actionId);
+    returnValue = await action.apply(null, args);
+  }
+
   const wakuResult = await wakuServerEntry.handleRequest(
     isRscRequest
       ? {

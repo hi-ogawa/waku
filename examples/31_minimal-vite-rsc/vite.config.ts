@@ -35,4 +35,8 @@ export default defineConfig({
       },
     },
   ],
+  define: {
+    'import.meta.env.WAKU_CONFIG_BASE_PATH': JSON.stringify(''),
+    'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify(''),
+  },
 });
