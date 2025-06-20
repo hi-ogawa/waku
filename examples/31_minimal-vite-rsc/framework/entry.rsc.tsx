@@ -32,14 +32,20 @@ export default async function handler(request: Request): Promise<Response> {
   };
 
   // cf. packages/waku/src/lib/middleware/handler.ts `getInput`
-  const rscPathPrefix = import.meta.env.WAKU_CONFIG_BASE_PATH + import.meta.env.WAKU_CONFIG_RSC_BASE + '/';
+  const rscPathPrefix =
+    import.meta.env.WAKU_CONFIG_BASE_PATH +
+    import.meta.env.WAKU_CONFIG_RSC_BASE +
+    '/';
   let rscPath: string | undefined;
   let temporaryReferences: unknown | undefined;
-  let returnValue: unknown | undefined;
-  let formState: ReactFormState | undefined;
+  let returnValue: unknown | undefined; // TODO
+  let formState: ReactFormState | undefined; // TODO
   if (url.pathname.startsWith(rscPathPrefix)) {
-    rscPath = decodeRscPath(decodeURI(url.pathname.slice(rscPathPrefix.length)));
+    rscPath = decodeRscPath(
+      decodeURI(url.pathname.slice(rscPathPrefix.length)),
+    );
     // server action: js
+    // TODO: fix rscPath after action?
     const actionId = decodeFuncId(rscPath);
     if (actionId) {
       const contentType = request.headers.get('content-type');
@@ -61,18 +67,21 @@ export default async function handler(request: Request): Promise<Response> {
     formState = await ReactServer.decodeFormState(result, formData);
   }
 
-  const input: HandleRequestInput = typeof rscPath === 'string'
-    ? {
-        type: 'component',
-        rscPath,
-        rscParams: url.searchParams,
-        req,
-      }
-    : { type: 'custom', pathname: url.pathname, req };
+  const input: HandleRequestInput =
+    typeof rscPath === 'string'
+      ? {
+          type: 'component',
+          rscPath,
+          rscParams: url.searchParams,
+          req,
+        }
+      : { type: 'custom', pathname: url.pathname, req };
 
   const implementation: HandleRequestImplementation = {
     async renderRsc(elements, options) {
-      return ReactServer.renderToReadableStream<RscElementsPayload>(elements);
+      return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
+        temporaryReferences,
+      });
     },
     async renderHtml(elements, html, options) {
       const ssrEntryModule = await import.meta.viteRsc.loadModule<
@@ -107,13 +116,11 @@ export default async function handler(request: Request): Promise<Response> {
       response = new Response(wakuResult);
     } else if (wakuResult.body) {
       response = new Response(wakuResult.body, {
-        headers: {
-          'content-type': 'text/html',
-        },
+        headers: wakuResult.headers as any,
       });
     }
   }
-  response ??= new Response('[not-found]');
+  response ??= new Response('[not-found]', { status: 404 });
   return response;
 }
 
