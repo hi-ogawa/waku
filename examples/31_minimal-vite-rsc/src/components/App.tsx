@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 
-import { Counter } from './Counter';
+import { Counter, Hydrated } from './Counter';
+import { ServerCounter } from './action';
 
 const App = ({ name }: { name: string }) => {
   return (
@@ -18,6 +19,8 @@ const App = ({ name }: { name: string }) => {
             <ServerMessage />
           </Suspense>
           <Counter />
+          <ServerCounter />
+          <Hydrated />
           <div>{new Date().toISOString()}</div>
         </div>
       </body>
@@ -26,7 +29,7 @@ const App = ({ name }: { name: string }) => {
 };
 
 const ServerMessage = async () => {
-  // await new Promise((resolve) => setTimeout(resolve, 2000));
+  // await new Promise((resolve) => setTimeout(resolve, 1000));
   return <p>Hello from server!</p>;
 };
 

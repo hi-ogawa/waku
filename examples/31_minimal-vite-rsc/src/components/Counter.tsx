@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 export const Counter = () => {
   const [count, setCount] = useState(0);
@@ -12,3 +12,12 @@ export const Counter = () => {
     </div>
   );
 };
+
+export function Hydrated() {
+  const hydrated = React.useSyncExternalStore(
+    React.useCallback(() => () => {}, []),
+    () => true,
+    () => false,
+  );
+  return <>[hydrated: {String(hydrated)}]</>;
+}
