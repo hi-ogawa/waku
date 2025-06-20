@@ -41,7 +41,7 @@ export async function renderHTML(
   const htmlStream = await ReactDOMServer.renderToReadableStream(<SsrRoot />, {
     bootstrapScriptContent: options?.debugNojs
       ? undefined
-      : bootstrapScriptContent,
+      : `globalThis.__WAKU_HYDRATE__ = true;` + bootstrapScriptContent,
     nonce: options?.nonce,
     // no types
     ...{ formState: options?.formState },

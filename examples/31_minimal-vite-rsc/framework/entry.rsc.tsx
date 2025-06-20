@@ -16,6 +16,8 @@ export default async function handler(request: Request): Promise<Response> {
       !url.searchParams.has('__html')) ||
     url.searchParams.has('__rsc');
 
+  // TODO: port `handleRequest` inputs construction
+
   const wakuResult = await wakuServerEntry.handleRequest(
     isRscRequest
       ? {
