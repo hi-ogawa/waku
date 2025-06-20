@@ -16,7 +16,7 @@ export async function renderHTML(
     debugNojs?: boolean;
   },
 ) {
-  // cf. packages/waku/src/lib/renderers/html.ts
+  // cf. packages/waku/src/lib/renderers/html.ts `renderHtml`
 
   const [stream1, stream2] = rscStream.tee();
 
@@ -60,7 +60,7 @@ export async function renderHTML(
   return responseStream;
 }
 
-// cf. packages/waku/src/lib/renderers/html.ts
+// cf. packages/waku/src/lib/renderers/html.ts `parseHtmlHead`
 function getBootstrapPreamble(options: { rscPathForFakeFetch: string }) {
   return `
     globalThis.__WAKU_HYDRATE__ = true;

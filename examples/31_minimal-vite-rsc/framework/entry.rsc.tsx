@@ -1,14 +1,13 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import wakuServerEntry from '../src/server-entry';
 
-// packages/waku/src/lib/renderers/html.ts
 export type RscElementsPayload = Record<string, unknown>;
 export type RscHtmlPayload = React.ReactNode;
 
 export default async function handler(request: Request): Promise<Response> {
-  // cf. packages/waku/src/lib/middleware/handler.ts
+  // cf. packages/waku/src/lib/middleware/handler.ts `handler`
 
-  // TODO: getInput
+  // TODO: `getInput`
   const url = new URL(request.url);
   const isRscRequest =
     (!request.headers.get('accept')?.includes('text/html') &&
