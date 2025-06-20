@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 
 import { Counter, Hydrated } from './Counter';
 import { ServerCounter } from './action';
+import { TestUseActionState } from './action-state/client';
 
 const App = ({ name }: { name: string }) => {
   return (
@@ -21,6 +22,7 @@ const App = ({ name }: { name: string }) => {
           <Counter />
           <ServerCounter />
           <Hydrated />
+          <TestUseActionState />
           <div>{new Date().toISOString()}</div>
         </div>
       </body>

@@ -38,14 +38,14 @@ export default async function handler(request: Request): Promise<Response> {
     '/';
   let rscPath: string | undefined;
   let temporaryReferences: unknown | undefined;
-  let returnValue: unknown | undefined; // TODO
-  let formState: ReactFormState | undefined; // TODO
+  let returnValue: unknown | undefined;
+  let formState: ReactFormState | undefined;
   if (url.pathname.startsWith(rscPathPrefix)) {
     rscPath = decodeRscPath(
       decodeURI(url.pathname.slice(rscPathPrefix.length)),
     );
-    // server action: js
-    // TODO: fix rscPath after action?
+    // TODO: input.type === 'fucntion'
+    // for now, we handle directly here.
     const actionId = decodeFuncId(rscPath);
     if (actionId) {
       const contentType = request.headers.get('content-type');
@@ -57,10 +57,8 @@ export default async function handler(request: Request): Promise<Response> {
       const action = await ReactServer.loadServerAction(actionId);
       returnValue = await action.apply(null, args);
     }
-  }
-
-  // server action: no js (progressive enhancement)
-  if (request.method === 'POST') {
+  } else if (request.method === 'POST') {
+    // server action: no js (progressive enhancement)
     const formData = await request.formData();
     const decodedAction = await ReactServer.decodeAction(formData);
     const result = await decodedAction();
@@ -79,9 +77,15 @@ export default async function handler(request: Request): Promise<Response> {
 
   const implementation: HandleRequestImplementation = {
     async renderRsc(elements, options) {
-      return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
-        temporaryReferences,
-      });
+      return ReactServer.renderToReadableStream<RscElementsPayload>(
+        {
+          ...elements,
+          _value: returnValue,
+        },
+        {
+          temporaryReferences,
+        },
+      );
     },
     async renderHtml(elements, html, options) {
       const ssrEntryModule = await import.meta.viteRsc.loadModule<
@@ -99,6 +103,7 @@ export default async function handler(request: Request): Promise<Response> {
         rscHtmlStream,
         {
           debugNojs: url.searchParams.has('__nojs'),
+          formState,
         },
       );
       return {
