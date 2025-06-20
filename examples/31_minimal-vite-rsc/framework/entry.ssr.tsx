@@ -1,6 +1,6 @@
 import bootstrapScriptContent from 'virtual:vite-rsc/bootstrap-script-content';
-import { injectRscStreamToHtml } from '@hiogawa/vite-rsc/rsc-html-stream/ssr'; // helper API
-import * as ReactClient from '@hiogawa/vite-rsc/ssr'; // RSC API
+import { injectRscStreamToHtml } from '@hiogawa/vite-rsc/rsc-html-stream/ssr';
+import * as ReactClient from '@hiogawa/vite-rsc/ssr';
 import React from 'react';
 import type { ReactFormState } from 'react-dom/client';
 import * as ReactDOMServer from 'react-dom/server.edge';

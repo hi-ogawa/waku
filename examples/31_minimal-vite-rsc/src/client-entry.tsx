@@ -15,3 +15,9 @@ if ((globalThis as any).__WAKU_HYDRATE__) {
 } else {
   createRoot(document as any).render(rootElement);
 }
+
+if (import.meta.hot) {
+  import.meta.hot.on('rsc:update', () => {
+    // TODO
+  });
+}
