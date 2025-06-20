@@ -36,14 +36,6 @@ export default async function handler(request: Request): Promise<Response> {
       async renderHtml(elements, html, options) {
         // console.log('[renderHtml]', { elements, html, options });
 
-        // TODO: root element API
-        html = (
-          <html>
-            <title>waku-vite-rsc</title>
-            <body>{html}</body>
-          </html>
-        );
-
         const ssrEntryModule = await import.meta.viteRsc.loadModule<
           typeof import('./entry.ssr.tsx')
         >('ssr', 'index');

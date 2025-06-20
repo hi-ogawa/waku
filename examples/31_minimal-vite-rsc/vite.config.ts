@@ -14,6 +14,7 @@ export default defineConfig({
       },
     }),
     {
+      // rewrite `react-server-dom-webpack` in `waku/minimal/client`
       name: 'waku-wip',
       enforce: 'pre',
       resolveId(source, importer, options) {
