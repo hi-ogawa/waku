@@ -2,6 +2,7 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig({
   entry: [
+    'src/cli.ts',
     'src/plugin.ts',
     'src/entry.browser.tsx',
     'src/entry.rsc.tsx',

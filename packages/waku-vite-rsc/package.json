@@ -10,6 +10,9 @@
     "./entry.rsc": "./dist/entry.rsc.js",
     "./package.json": "./package.json"
   },
+  "bin": {
+    "waku-vite-rsc": "./bin/cli.js"
+  },
   "files": [
     "dist"
   ],
@@ -28,9 +31,9 @@
     "waku": "workspace:*"
   },
   "peerDependencies": {
-    "waku": "*",
     "react": "*",
     "react-dom": "*",
-    "vite": "*"
+    "vite": "*",
+    "waku": "*"
   }
 }
