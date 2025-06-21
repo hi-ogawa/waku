@@ -22,8 +22,25 @@ function main() {
     argv[0] = 'preview';
   }
 
+  let configFile: string | undefined;
+
   // auto setup vite.config.ts
-  const configFile = setupViteConfig();
+  if (!fs.existsSync('vite.config.ts')) {
+    configFile = 'node_modules/.cache/waku-vite-rsc/vite.config.ts';
+    if (!fs.existsSync(configFile)) {
+      fs.mkdirSync(path.dirname(configFile), { recursive: true });
+      fs.writeFileSync(
+        configFile,
+        `\
+import waku from "waku-vite-rsc/plugin";
+
+export default {
+  plugins: [waku()],
+};
+`,
+      );
+    }
+  }
 
   // spawn vite
   const viteBin = path.join(
@@ -41,29 +58,6 @@ function main() {
   proc.on('close', (code) => {
     process.exitCode = code ?? 1;
   });
-}
-
-// create and use default config if no vite.config.ts
-function setupViteConfig() {
-  if (fs.existsSync('vite.config.ts')) {
-    return;
-  }
-
-  const DEFAULT_VITE_CONFIG = `\
-import waku from "waku-vite-rsc/plugin";
-import { defineConfig } from ${JSON.stringify(import.meta.resolve('vite'))};
-
-export default defineConfig({
-  plugins: [waku()],
-});
-`;
-
-  const configFile = 'node_modules/.cache/waku-vite-rsc/vite.config.ts';
-  if (!fs.existsSync(configFile)) {
-    fs.mkdirSync(path.dirname(configFile), { recursive: true });
-    fs.writeFileSync(configFile, DEFAULT_VITE_CONFIG);
-  }
-  return configFile;
 }
 
 main();
