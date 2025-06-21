@@ -3,7 +3,10 @@ import { unstable_callServerRsc } from 'waku/minimal/client';
 ReactClient.setServerCallback(unstable_callServerRsc);
 
 if (import.meta.hot) {
-  import.meta.hot.on('rsc:update', () => {
-    (globalThis as any).__WAKU_RSC_RELOAD_LISTENERS__?.forEach((l: any) => l());
+  import.meta.hot.on('rsc:update', (e) => {
+    console.log('[rsc:update]', e);
+    // TODO: it fails on router examples, so for now force reload
+    // (globalThis as any).__WAKU_RSC_RELOAD_LISTENERS__?.forEach((l: any) => l());
+    window.location.reload();
   });
 }
