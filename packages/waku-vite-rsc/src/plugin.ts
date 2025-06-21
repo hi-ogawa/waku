@@ -69,7 +69,6 @@ export default function wakuViteRscPlugin(): PluginOption {
       name: 'rsc:waku:fix-internal-client-boundary',
       transform(code, id) {
         if (id.includes('/node_modules/waku/dist/router/create-pages.js')) {
-          console.log({ id });
           return code
             .replaceAll(
               `from '../minimal/client.js'`,
@@ -81,7 +80,6 @@ export default function wakuViteRscPlugin(): PluginOption {
             );
         }
         if (id.includes('/node_modules/waku/dist/router/define-router.js')) {
-          console.log({ id });
           return code.replaceAll(
             `from './client.js'`,
             `from 'waku/router/client'`,
