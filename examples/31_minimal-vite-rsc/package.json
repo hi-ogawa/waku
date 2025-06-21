@@ -15,7 +15,7 @@
     "waku-vite-rsc": "workspace:*"
   },
   "devDependencies": {
-    "@hiogawa/vite-rsc": "0.4.4",
+    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@593c52d",
     "@vitejs/plugin-react": "4.5.1",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.6",
