@@ -6,7 +6,9 @@ import path from 'node:path';
 
 const PKG_NAME = 'waku-vite-rsc';
 
-export default function wakuViteRscPlugin(): PluginOption {
+export default function wakuViteRscPlugin(wakuOptions?: {
+  serverHmr?: boolean | 'reload';
+}): PluginOption {
   return [
     react(),
     rsc(),
@@ -28,6 +30,10 @@ export default function wakuViteRscPlugin(): PluginOption {
           define: {
             'import.meta.env.WAKU_CONFIG_BASE_PATH': JSON.stringify('/'),
             'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify('RSC'),
+            // TODO: it fails on router examples, so for now force reload by default
+            'import.meta.env.WAKU_SERVER_HMR': JSON.stringify(
+              wakuOptions?.serverHmr ?? 'reload',
+            ),
           },
           environments: {
             client: toEnvironmentOption('entry.browser'),
@@ -169,6 +175,7 @@ export default function wakuViteRscPlugin(): PluginOption {
       name: 'rsc:waku:patch-server-hmr',
       apply: 'serve',
       async transform(code, id) {
+        if (wakuOptions?.serverHmr !== true) return;
         if (this.environment.name !== 'client') return;
         if (id.includes('/waku/dist/minimal/client.js')) {
           return code.replace(
