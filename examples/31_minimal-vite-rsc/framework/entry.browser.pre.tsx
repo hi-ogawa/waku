@@ -4,5 +4,7 @@ ReactClient.setServerCallback(unstable_callServerRsc);
 
 // TODO: server HMR
 if (import.meta.hot) {
-  import.meta.hot.on('rsc:update', () => {});
+  import.meta.hot.on('rsc:update', () => {
+    (globalThis as any).__WAKU_RSC_RELOAD_LISTENERS__?.forEach((l: any) => l());
+  });
 }
