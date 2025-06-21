@@ -1,7 +1,9 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
+import type React from 'react';
 import type { unstable_defineEntries } from 'waku/minimal/server';
 
 export type RscElementsPayload = Record<string, unknown>;
+// eslint-disable-next-line
 export type RscHtmlPayload = React.ReactNode;
 
 type WakuServerEntry = ReturnType<typeof unstable_defineEntries>;
@@ -19,9 +21,9 @@ type HandleReq = {
 
 // cf. packages/waku/src/lib/middleware/handler.ts `handler`
 export default async function handler(request: Request): Promise<Response> {
-  const { default: wakuServerEntry } = await import(
-    'virtual:vite-rsc-waku/server-entry'
-  );
+  // eslint-disable-next-line
+  const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
+    .default;
 
   const url = new URL(request.url);
   const req: HandleReq = {

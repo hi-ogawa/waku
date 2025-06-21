@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 import rsc from '@hiogawa/vite-rsc/plugin';
 import react from '@vitejs/plugin-react';
+// @ts-ignore
+// eslint-disable-next-line
 import waku from 'waku-vite-rsc/plugin';
 
 export default defineConfig({
