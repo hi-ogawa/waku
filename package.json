@@ -46,10 +46,5 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.33.1",
     "waku": "workspace:*"
-  },
-  "pnpm": {
-    "overrides": {
-      "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@64167b1"
-    }
   }
 }

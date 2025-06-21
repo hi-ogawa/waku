@@ -22,7 +22,7 @@
     "prepack": "tsdown --clean"
   },
   "dependencies": {
-    "@hiogawa/vite-rsc": "latest",
+    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@5970c2b",
     "@vitejs/plugin-react": "4.5.1",
     "vite": "6.3.5"
   },
