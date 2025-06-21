@@ -30,13 +30,17 @@ export default function wakuViteRscPlugin(): Plugin[] {
           },
         };
       },
-      configEnvironment(_name, _config, _env) {
+      configEnvironment(name, _config, _env) {
         return {
           resolve: {
             noExternal: [PKG_NAME],
           },
           optimizeDeps: {
             exclude: [PKG_NAME],
+          },
+          build: {
+            // top-level-await in packages/waku/src/lib/middleware/context.ts
+            target: name !== 'client' ? 'esnext' : undefined,
           },
         };
       },
