@@ -4,8 +4,8 @@ import * as ReactClient from '@hiogawa/vite-rsc/ssr';
 import React from 'react';
 import type { ReactFormState } from 'react-dom/client';
 import * as ReactDOMServer from 'react-dom/server.edge';
-import type { RscHtmlPayload, RscElementsPayload } from './entry.rsc';
 import { INTERNAL_ServerRoot } from 'waku/minimal/client';
+import type { RscElementsPayload, RscHtmlPayload } from './entry.rsc';
 
 export async function renderHTML(
   rscStream: ReadableStream<Uint8Array>,
@@ -16,7 +16,7 @@ export async function renderHTML(
     nonce?: string;
     debugNojs?: boolean;
   },
-) {
+): Promise<ReadableStream<Uint8Array>> {
   // cf. packages/waku/src/lib/renderers/html.ts `renderHtml`
 
   const [stream1, stream2] = rscStream.tee();
@@ -48,7 +48,7 @@ export async function renderHTML(
     ...{ formState: options?.formState },
   });
 
-  let responseStream: ReadableStream = htmlStream;
+  let responseStream: ReadableStream<Uint8Array> = htmlStream;
   if (!options?.debugNojs) {
     responseStream = responseStream.pipeThrough(
       injectRscStreamToHtml(stream2, {

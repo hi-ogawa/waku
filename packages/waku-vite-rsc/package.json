@@ -1,0 +1,30 @@
+{
+  "name": "waku-vite-rsc",
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "./*": "./dist/*.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsdown --sourcemap --watch src",
+    "build": "tsdown",
+    "prepack": "tsdown --clean"
+  },
+  "devDependencies": {
+    "tsdown": "^0.12.8",
+    "@hiogawa/vite-rsc": "0.4.4",
+    "waku": "workspace:*"
+  },
+  "peerDependencies": {
+    "@hiogawa/vite-rsc": "*",
+    "waku": "*",
+    "react": "*",
+    "react-dom": "*",
+    "vite": "*"
+  }
+}

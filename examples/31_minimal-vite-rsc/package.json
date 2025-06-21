@@ -11,10 +11,11 @@
   "dependencies": {
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-server-dom-webpack": "19.1.0",
-    "waku": "0.23.2"
+    "waku": "0.23.2",
+    "waku-vite-rsc": "workspace:*"
   },
   "devDependencies": {
+    "@hiogawa/vite-rsc": "0.4.4",
     "@vitejs/plugin-react": "4.5.1",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.6",
