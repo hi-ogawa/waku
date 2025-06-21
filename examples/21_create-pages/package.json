@@ -16,10 +16,10 @@
     "waku-vite-rsc": "workspace:*"
   },
   "devDependencies": {
-    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@593c52d",
+    "@hiogawa/vite-rsc": "latest",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.6",
-    "server-only": "^0.0.1",
+    "server-only": "0.0.1",
     "typescript": "5.8.3",
     "vite": "6.3.5"
   }

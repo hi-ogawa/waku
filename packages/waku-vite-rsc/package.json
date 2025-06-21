@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "tsdown": "^0.12.8",
-    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@593c52d",
+    "@hiogawa/vite-rsc": "latest",
     "waku": "workspace:*"
   },
   "peerDependencies": {

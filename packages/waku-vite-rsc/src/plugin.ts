@@ -35,7 +35,7 @@ export default function wakuViteRscPlugin(): PluginOption {
       configEnvironment(name, _config, _env) {
         return {
           resolve: {
-            noExternal: [PKG_NAME, 'server-only', 'client-only'],
+            noExternal: [PKG_NAME],
           },
           optimizeDeps: {
             exclude: [PKG_NAME],

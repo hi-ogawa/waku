@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 
 import { Link } from 'waku/router/client';
 
-// TODO: https://github.com/hi-ogawa/vite-plugins/issues/1044
 import '../styles.css';
 
 const Pending = ({ isPending }: { isPending: boolean }) => (
