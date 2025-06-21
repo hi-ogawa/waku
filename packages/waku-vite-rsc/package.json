@@ -4,7 +4,10 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    "./*": "./dist/*.js",
+    "./plugin": "./dist/plugin.js",
+    "./entry.browser": "./dist/entry.browser.js",
+    "./entry.ssr": "./dist/entry.ssr.js",
+    "./entry.rsc": "./dist/entry.rsc.js",
     "./package.json": "./package.json"
   },
   "files": [
