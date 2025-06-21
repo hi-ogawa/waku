@@ -590,6 +590,9 @@ importers:
       waku:
         specifier: 0.23.2
         version: link:../../packages/waku
+      waku-vite-rsc:
+        specifier: workspace:*
+        version: link:../../packages/waku-vite-rsc
     devDependencies:
       '@tailwindcss/postcss':
         specifier: 4.1.8

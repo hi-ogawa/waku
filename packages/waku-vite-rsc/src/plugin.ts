@@ -1,6 +1,8 @@
 import type { EnvironmentOptions, PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
 import rsc from '@hiogawa/vite-rsc/plugin';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
 
 const PKG_NAME = 'waku-vite-rsc';
 
@@ -64,12 +66,39 @@ export default function wakuViteRscPlugin(): PluginOption {
     },
     {
       name: 'rsc:waku:user-entries',
-      resolveId(source, _importer, options) {
+      // resolve user entries or fallbacks to "managed mode"
+      async resolveId(source, _importer, options) {
         if (source === 'virtual:vite-rsc-waku/server-entry') {
-          return this.resolve('/src/server-entry', undefined, options);
+          const resolved = await this.resolve(
+            '/src/server-entry',
+            undefined,
+            options,
+          );
+          return resolved ? resolved : '\0' + source;
         }
         if (source === 'virtual:vite-rsc-waku/client-entry') {
-          return this.resolve('/src/client-entry', undefined, options);
+          const resolved = await this.resolve(
+            '/src/client-entry',
+            undefined,
+            options,
+          );
+          return resolved ? resolved : '\0' + source;
+        }
+      },
+      load(id) {
+        // cf. packages/waku/src/lib/plugins/vite-plugin-rsc-managed.ts
+        if (id === '\0virtual:vite-rsc-waku/server-entry') {
+          return getManagedEntries(
+            path.join(this.environment.config.root, 'src/server-entry.js'),
+            'src',
+            {
+              pagesDir: 'pages',
+              apiDir: 'api',
+            },
+          );
+        }
+        if (id === '\0virtual:vite-rsc-waku/client-entry') {
+          return getManagedMain();
         }
       },
     },
@@ -128,3 +157,36 @@ export default function wakuViteRscPlugin(): PluginOption {
     },
   ];
 }
+
+// cf. packages/waku/src/lib/plugins/vite-plugin-rsc-managed.ts
+const EXTENSIONS = ['.js', '.ts', '.tsx', '.jsx', '.mjs', '.cjs'];
+
+const getManagedEntries = (
+  filePath: string,
+  srcDir: string,
+  options: { pagesDir: string; apiDir: string },
+) => `
+import { unstable_fsRouter as fsRouter } from 'waku/router/server';
+
+export default fsRouter(
+  '${pathToFileURL(filePath)}',
+  (file) => import.meta.glob('/${srcDir}/pages/**/*.{${EXTENSIONS.map((ext) =>
+    ext.replace(/^\./, ''),
+  ).join(',')}}')[\`/${srcDir}/pages/\${file}\`]?.(),
+  { pagesDir: '${options.pagesDir}', apiDir: '${options.apiDir}' },
+);
+`;
+
+const getManagedMain = () => `
+import { StrictMode, createElement } from 'react';
+import { createRoot, hydrateRoot } from 'react-dom/client';
+import { Router } from 'waku/router/client';
+
+const rootElement = createElement(StrictMode, null, createElement(Router));
+
+if (globalThis.__WAKU_HYDRATE__) {
+  hydrateRoot(document, rootElement);
+} else {
+  createRoot(document).render(rootElement);
+}
+`;

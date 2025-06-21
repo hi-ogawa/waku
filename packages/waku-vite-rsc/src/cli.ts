@@ -45,7 +45,9 @@ function main() {
 
 // create and use default config if no vite.config.ts
 function setupViteConfig() {
-  if (fs.existsSync('vite.config.ts')) {return;}
+  if (fs.existsSync('vite.config.ts')) {
+    return;
+  }
 
   const DEFAULT_VITE_CONFIG = `\
 import waku from "waku-vite-rsc/plugin";
