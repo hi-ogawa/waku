@@ -33,7 +33,6 @@
   "peerDependencies": {
     "react": "*",
     "react-dom": "*",
-    "vite": "*",
     "waku": "*"
   }
 }

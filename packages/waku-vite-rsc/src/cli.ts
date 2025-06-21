@@ -4,6 +4,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import process from 'node:process';
 
+const require = createRequire(import.meta.url);
+
 // based on
 // https://github.com/hi-ogawa/vite-plugins/blob/5970c2bab1aff4d40a04756198feaeecaa924ecf/packages/react-server-next/src/cli.ts#L33-L34
 
@@ -25,7 +27,7 @@ function main() {
 
   // spawn vite
   const viteBin = path.join(
-    createRequire(import.meta.url).resolve('vite/package.json'),
+    require.resolve('vite/package.json'),
     '../bin/vite.js',
   );
   const proc = spawn(
@@ -47,7 +49,7 @@ function setupViteConfig() {
 
   const DEFAULT_VITE_CONFIG = `\
 import waku from "waku-vite-rsc/plugin";
-import { defineConfig } from "vite";
+import { defineConfig } from ${JSON.stringify(import.meta.resolve('vite'))};
 
 export default defineConfig({
   plugins: [waku()],

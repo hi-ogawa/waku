@@ -4,9 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "waku-vite-rsc dev",
+    "build": "waku-vite-rsc build",
+    "start": "waku-vite-rsc start"
   },
   "dependencies": {
     "react": "19.1.0",
@@ -17,7 +17,6 @@
   "devDependencies": {
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.6",
-    "typescript": "5.8.3",
-    "vite": "6.3.5"
+    "typescript": "5.8.3"
   }
 }
