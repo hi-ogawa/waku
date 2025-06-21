@@ -55,13 +55,55 @@ export default function wakuViteRscPlugin(): PluginOption {
             noExternal: [PKG_NAME],
           },
           optimizeDeps: {
-            exclude: [PKG_NAME],
+            exclude: [PKG_NAME, 'waku/minimal/client', 'waku/router/client'],
           },
           build: {
             // top-level-await in packages/waku/src/lib/middleware/context.ts
             target: name !== 'client' ? 'esnext' : undefined,
           },
         };
+      },
+    },
+    {
+      // don't violate https://github.com/hi-ogawa/rsc-tests
+      name: 'rsc:waku:fix-internal-client-boundary',
+      transform(code, id) {
+        if (id.includes('/node_modules/waku/dist/router/create-pages.js')) {
+          console.log({ id });
+          return code
+            .replaceAll(
+              `from '../minimal/client.js'`,
+              `from 'waku/minimal/client'`,
+            )
+            .replaceAll(
+              `from '../router/client.js'`,
+              `from 'waku/router/client'`,
+            );
+        }
+        if (id.includes('/node_modules/waku/dist/router/define-router.js')) {
+          console.log({ id });
+          return code.replaceAll(
+            `from './client.js'`,
+            `from 'waku/router/client'`,
+          );
+        }
+      },
+      resolveId: {
+        order: 'pre',
+        handler(id, importer) {
+          // warning if `{minimal,router}/client.js` is internally resolved inside rsc environment
+          if (
+            importer?.includes('/node_modules/') &&
+            id.endsWith('/client.js')
+          ) {
+            if (this.environment.name === 'rsc') {
+              console.log(
+                '[vite-rsc:waku] client boundary inside server package?',
+                { id, importer },
+              );
+            }
+          }
+        },
       },
     },
     {
