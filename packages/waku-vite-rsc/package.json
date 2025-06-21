@@ -19,16 +19,15 @@
     "prepack": "tsdown --clean"
   },
   "dependencies": {
+    "@hiogawa/vite-rsc": "latest",
     "@vitejs/plugin-react": "4.5.1",
     "vite": "6.3.5"
   },
   "devDependencies": {
     "tsdown": "^0.12.8",
-    "@hiogawa/vite-rsc": "latest",
     "waku": "workspace:*"
   },
   "peerDependencies": {
-    "@hiogawa/vite-rsc": "*",
     "waku": "*",
     "react": "*",
     "react-dom": "*",

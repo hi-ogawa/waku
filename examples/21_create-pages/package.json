@@ -16,7 +16,6 @@
     "waku-vite-rsc": "workspace:*"
   },
   "devDependencies": {
-    "@hiogawa/vite-rsc": "latest",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.6",
     "server-only": "0.0.1",

@@ -1,11 +1,13 @@
 import type { EnvironmentOptions, PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
+import rsc from '@hiogawa/vite-rsc/plugin';
 
 const PKG_NAME = 'waku-vite-rsc';
 
 export default function wakuViteRscPlugin(): PluginOption {
   return [
     react(),
+    rsc(),
     {
       name: 'rsc:waku',
       config() {
@@ -32,7 +34,20 @@ export default function wakuViteRscPlugin(): PluginOption {
           },
         };
       },
-      configEnvironment(name, _config, _env) {
+      configEnvironment(name, config, _env) {
+        // make @hiogawa/vite-rsc usable as a transitive dependency
+        // https://github.com/hi-ogawa/vite-plugins/issues/968
+        if (config.optimizeDeps?.include) {
+          config.optimizeDeps.include = config.optimizeDeps.include.map(
+            (name) => {
+              if (name.startsWith('@hiogawa/vite-rsc/')) {
+                name = `${PKG_NAME} > ${name}`;
+              }
+              return name;
+            },
+          );
+        }
+
         return {
           resolve: {
             noExternal: [PKG_NAME],
@@ -71,7 +86,7 @@ export default function wakuViteRscPlugin(): PluginOption {
         if (id === '\0react-server-dom-webpack/client') {
           if (this.environment.name === 'client') {
             return `
-              import * as ReactClient from '@hiogawa/vite-rsc/browser';
+              import * as ReactClient from ${JSON.stringify(import.meta.resolve('@hiogawa/vite-rsc/browser'))};
               export default ReactClient;
             `;
           }
