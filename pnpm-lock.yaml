@@ -961,28 +961,6 @@ importers:
       waku:
         specifier: 0.23.2
         version: link:../../packages/waku
-    devDependencies:
-      '@types/react':
-        specifier: 19.1.6
-        version: 19.1.6
-      '@types/react-dom':
-        specifier: 19.1.6
-        version: 19.1.6(@types/react@19.1.6)
-      typescript:
-        specifier: 5.8.3
-        version: 5.8.3
-
-  examples/22_define-router-vite-rsc:
-    dependencies:
-      react:
-        specifier: 19.1.0
-        version: 19.1.0
-      react-dom:
-        specifier: 19.1.0
-        version: 19.1.0(react@19.1.0)
-      waku:
-        specifier: 0.23.2
-        version: link:../../packages/waku
       waku-vite-rsc:
         specifier: workspace:*
         version: link:../../packages/waku-vite-rsc
@@ -996,9 +974,6 @@ importers:
       '@types/react-dom':
         specifier: 19.1.6
         version: 19.1.6(@types/react@19.1.6)
-      '@vitejs/plugin-react':
-        specifier: 4.5.1
-        version: 4.5.1(vite@6.3.5(@types/node@22.15.29)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.41.0)(tsx@4.19.4)(yaml@2.8.0))
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -1611,6 +1586,9 @@ importers:
 
   packages/waku-vite-rsc:
     dependencies:
+      '@vitejs/plugin-react':
+        specifier: 4.5.1
+        version: 4.5.1(vite@6.3.5(@types/node@22.15.29)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.41.0)(tsx@4.19.4)(yaml@2.8.0))
       react:
         specifier: '*'
         version: 19.1.0
@@ -1618,7 +1596,7 @@ importers:
         specifier: '*'
         version: 19.1.0(react@19.1.0)
       vite:
-        specifier: '*'
+        specifier: 6.3.5
         version: 6.3.5(@types/node@22.15.29)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.41.0)(tsx@4.19.4)(yaml@2.8.0)
     devDependencies:
       '@hiogawa/vite-rsc':

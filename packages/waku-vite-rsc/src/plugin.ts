@@ -1,9 +1,11 @@
-import type { EnvironmentOptions, Plugin } from 'vite';
+import type { EnvironmentOptions, PluginOption } from 'vite';
+import react from '@vitejs/plugin-react';
 
 const PKG_NAME = 'waku-vite-rsc';
 
-export default function wakuViteRscPlugin(): Plugin[] {
+export default function wakuViteRscPlugin(): PluginOption {
   return [
+    react(),
     {
       name: 'rsc:waku',
       config() {
