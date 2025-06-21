@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { Link } from 'waku/router/client';
 
-// TODO
+// TODO: https://github.com/hi-ogawa/vite-plugins/issues/1044
 import '../styles.css';
 
 const Pending = ({ isPending }: { isPending: boolean }) => (
@@ -21,8 +21,6 @@ export const HomeLayout = ({ children }: { children: ReactNode }) => (
   <div>
     <ul>
       <li>
-        {/* @ts-ignore */}
-        {import.meta.viteRsc.loadCss()}
         <Link
           to="/"
           unstable_pending={<Pending isPending />}
