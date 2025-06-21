@@ -12,12 +12,15 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-server-dom-webpack": "19.1.0",
-    "waku": "0.23.2"
+    "waku": "0.23.2",
+    "waku-vite-rsc": "workspace:*"
   },
   "devDependencies": {
+    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@593c52d",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.6",
-    "server-only": "0.0.1",
-    "typescript": "5.8.3"
+    "server-only": "^0.0.1",
+    "typescript": "5.8.3",
+    "vite": "6.3.5"
   }
 }
