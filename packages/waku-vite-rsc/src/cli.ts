@@ -24,9 +24,9 @@ function main() {
 
   let configFile: string | undefined;
 
-  // auto setup vite.config.ts
+  // auto setup vite.config.ts in a hidden place
   if (!fs.existsSync('vite.config.ts')) {
-    configFile = 'node_modules/.cache/waku-vite-rsc/vite.config.ts';
+    configFile = 'node_modules/.cache/waku-vite-rsc/vite.config.0.ts';
     if (!fs.existsSync(configFile)) {
       fs.mkdirSync(path.dirname(configFile), { recursive: true });
       fs.writeFileSync(
