@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "dev": "tsdown --sourcemap --watch src",
-    "build": "tsdown"
+    "compile": "tsdown"
   },
   "dependencies": {
     "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@5970c2b",
