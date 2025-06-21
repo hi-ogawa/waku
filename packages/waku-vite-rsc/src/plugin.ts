@@ -165,11 +165,12 @@ export default function wakuViteRscPlugin(): PluginOption {
     },
     {
       // cf. packages/waku/src/lib/plugins/vite-plugin-rsc-hmr.ts
+      // TODO: this doesn't seem enough fo fs-router
       name: 'rsc:waku:patch-server-hmr',
       apply: 'serve',
       applyToEnvironment: (environment) => environment.name === 'client',
       async transform(code, id) {
-        if (id.endsWith('/minimal/client.js')) {
+        if (id.includes('/waku/distminimal/client.js')) {
           return code.replace(
             /\nexport const fetchRsc = \(.*?\)=>\{/,
             (m) =>
