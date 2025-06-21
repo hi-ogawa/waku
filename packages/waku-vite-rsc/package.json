@@ -14,7 +14,8 @@
     "waku-vite-rsc": "./bin/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "scripts": {
     "dev": "tsdown --sourcemap --watch src",
