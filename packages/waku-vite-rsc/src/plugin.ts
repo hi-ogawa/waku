@@ -165,7 +165,7 @@ export default function wakuViteRscPlugin(): PluginOption {
     },
     {
       // cf. packages/waku/src/lib/plugins/vite-plugin-rsc-hmr.ts
-      // TODO: this doesn't seem enough fo fs-router
+      // TODO: this doesn't seem enough for fs-router
       name: 'rsc:waku:patch-server-hmr',
       apply: 'serve',
       applyToEnvironment: (environment) => environment.name === 'client',
