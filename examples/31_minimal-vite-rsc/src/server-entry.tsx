@@ -14,6 +14,17 @@ export default defineEntries({
         rscPath: '',
       });
     }
+    if (input.type === 'function') {
+      const value = await input.fn(...input.args);
+      return renderRsc({ App: <App name="Waku" />, _value: value });
+    }
+    if (input.type === 'action') {
+      const actionResult = await input.fn();
+      return renderHtml({ App: <App name="Waku" /> }, <Slot id="App" />, {
+        rscPath: '',
+        actionResult,
+      });
+    }
   },
   handleBuild: () => ({}) as any,
   // handleBuild: ({

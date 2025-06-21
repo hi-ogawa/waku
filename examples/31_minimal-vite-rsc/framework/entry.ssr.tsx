@@ -11,6 +11,7 @@ export async function renderHTML(
   rscStream: ReadableStream<Uint8Array>,
   rscHtmlStream: ReadableStream<Uint8Array>,
   options?: {
+    rscPath?: string;
     formState?: ReactFormState;
     nonce?: string;
     debugNojs?: boolean;
@@ -40,8 +41,7 @@ export async function renderHTML(
   const htmlStream = await ReactDOMServer.renderToReadableStream(<SsrRoot />, {
     bootstrapScriptContent: options?.debugNojs
       ? undefined
-      : // TODO: rscPathForFakeFetch
-        getBootstrapPreamble({ rscPathForFakeFetch: '' }) +
+      : getBootstrapPreamble({ rscPathForFakeFetch: options?.rscPath || '' }) +
         bootstrapScriptContent,
     nonce: options?.nonce,
     // no types

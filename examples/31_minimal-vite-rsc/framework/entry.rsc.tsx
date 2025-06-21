@@ -1,6 +1,5 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import wakuServerEntry from '../src/server-entry';
-import { ReactFormState } from 'react-dom/client';
 
 export type RscElementsPayload = Record<string, unknown>;
 export type RscHtmlPayload = React.ReactNode;
@@ -20,9 +19,8 @@ type HandleReq = {
   headers: Readonly<Record<string, string>>;
 };
 
+// cf. packages/waku/src/lib/middleware/handler.ts `handler`
 export default async function handler(request: Request): Promise<Response> {
-  // cf. packages/waku/src/lib/middleware/handler.ts `handler`
-
   const url = new URL(request.url);
   const req: HandleReq = {
     body: request.body,
@@ -38,14 +36,12 @@ export default async function handler(request: Request): Promise<Response> {
     '/';
   let rscPath: string | undefined;
   let temporaryReferences: unknown | undefined;
-  let returnValue: unknown | undefined;
-  let formState: ReactFormState | undefined;
+  let wakuInput: HandleRequestInput;
   if (url.pathname.startsWith(rscPathPrefix)) {
     rscPath = decodeRscPath(
       decodeURI(url.pathname.slice(rscPathPrefix.length)),
     );
-    // TODO: input.type === 'fucntion'
-    // for now, we handle directly here.
+    // server action: js
     const actionId = decodeFuncId(rscPath);
     if (actionId) {
       const contentType = request.headers.get('content-type');
@@ -55,39 +51,55 @@ export default async function handler(request: Request): Promise<Response> {
       temporaryReferences = ReactServer.createTemporaryReferenceSet();
       const args = await ReactServer.decodeReply(body, { temporaryReferences });
       const action = await ReactServer.loadServerAction(actionId);
-      returnValue = await action.apply(null, args);
+      wakuInput = {
+        type: 'function',
+        fn: action as any,
+        args,
+        req,
+      };
+    } else {
+      // client RSC request
+      wakuInput = {
+        type: 'component',
+        rscPath,
+        rscParams: url.searchParams,
+        req,
+      };
     }
   } else if (request.method === 'POST') {
     // server action: no js (progressive enhancement)
     const formData = await request.formData();
     const decodedAction = await ReactServer.decodeAction(formData);
-    const result = await decodedAction();
-    formState = await ReactServer.decodeFormState(result, formData);
+    wakuInput = {
+      type: 'action',
+      fn: async () => {
+        const result = await decodedAction();
+        return await ReactServer.decodeFormState(result, formData);
+      },
+      pathname: url.pathname,
+      req,
+    };
+  } else {
+    // SSR
+    wakuInput = {
+      type: 'custom',
+      pathname: url.pathname,
+      req,
+    };
   }
 
-  const input: HandleRequestInput =
-    typeof rscPath === 'string'
-      ? {
-          type: 'component',
-          rscPath,
-          rscParams: url.searchParams,
-          req,
-        }
-      : { type: 'custom', pathname: url.pathname, req };
-
   const implementation: HandleRequestImplementation = {
-    async renderRsc(elements, options) {
-      return ReactServer.renderToReadableStream<RscElementsPayload>(
-        {
-          ...elements,
-          _value: returnValue,
-        },
-        {
-          temporaryReferences,
-        },
-      );
+    // TODO: what `options` for?
+    async renderRsc(elements, _options) {
+      return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
+        temporaryReferences,
+      });
     },
-    async renderHtml(elements, html, options) {
+    async renderHtml(
+      elements,
+      html,
+      options?: { rscPath?: string; actionResult?: any },
+    ) {
       const ssrEntryModule = await import.meta.viteRsc.loadModule<
         typeof import('./entry.ssr.tsx')
       >('ssr', 'index');
@@ -103,7 +115,8 @@ export default async function handler(request: Request): Promise<Response> {
         rscHtmlStream,
         {
           debugNojs: url.searchParams.has('__nojs'),
-          formState,
+          formState: options?.actionResult,
+          rscPath: options?.rscPath,
         },
       );
       return {
@@ -113,7 +126,10 @@ export default async function handler(request: Request): Promise<Response> {
     },
   };
 
-  const wakuResult = await wakuServerEntry.handleRequest(input, implementation);
+  const wakuResult = await wakuServerEntry.handleRequest(
+    wakuInput,
+    implementation,
+  );
 
   let response: Response;
   if (wakuResult) {
@@ -125,7 +141,7 @@ export default async function handler(request: Request): Promise<Response> {
       });
     }
   }
-  response ??= new Response('[not-found]', { status: 404 });
+  response ??= new Response('[no-render-result]', { status: 404 });
   return response;
 }
 
