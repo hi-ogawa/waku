@@ -65,6 +65,9 @@ importers:
       waku:
         specifier: workspace:*
         version: link:packages/waku
+      waku-vite-rsc:
+        specifier: workspace:*
+        version: link:packages/waku-vite-rsc
 
   e2e/fixtures/broken-links:
     dependencies:
@@ -590,9 +593,6 @@ importers:
       waku:
         specifier: 0.23.2
         version: link:../../packages/waku
-      waku-vite-rsc:
-        specifier: workspace:*
-        version: link:../../packages/waku-vite-rsc
     devDependencies:
       '@tailwindcss/postcss':
         specifier: 4.1.8
@@ -871,9 +871,6 @@ importers:
       waku:
         specifier: 0.23.2
         version: link:../../packages/waku
-      waku-vite-rsc:
-        specifier: workspace:*
-        version: link:../../packages/waku-vite-rsc
     devDependencies:
       '@types/react':
         specifier: 19.1.6
@@ -939,9 +936,6 @@ importers:
       waku:
         specifier: 0.23.2
         version: link:../../packages/waku
-      waku-vite-rsc:
-        specifier: workspace:*
-        version: link:../../packages/waku-vite-rsc
     devDependencies:
       '@types/react':
         specifier: 19.1.6
@@ -970,9 +964,6 @@ importers:
       waku:
         specifier: 0.23.2
         version: link:../../packages/waku
-      waku-vite-rsc:
-        specifier: workspace:*
-        version: link:../../packages/waku-vite-rsc
     devDependencies:
       '@types/react':
         specifier: 19.1.6
