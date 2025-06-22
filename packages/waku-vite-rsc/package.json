@@ -24,6 +24,7 @@
   "dependencies": {
     "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@2f41ae1",
     "@vitejs/plugin-react": "4.5.1",
+    "tinyglobby": "^0.2.14",
     "vite": "6.3.5"
   },
   "devDependencies": {

@@ -9,10 +9,6 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {
-  unstable_getBuildOptions,
-  unstable_getPlatformData,
-} from 'waku/server';
 
 const PKG_NAME = 'waku-vite-rsc';
 
@@ -214,50 +210,11 @@ export default function wakuViteRscPlugin(wakuOptions?: {
         }
       },
     },
-    // TODO: actually we don't need to handleBuild yet for `__WAKU_SERVER_PLATFORM_DATA__.fsRouterFiles`
-    // remove it for simplicity and propose it separately.
     {
-      name: 'rsc:waku:handle-build',
-      // run `handleBuild` after the build
-      writeBundle: {
-        order: 'post',
-        async handler(_options, _bundle) {
-          if (this.environment.name !== 'ssr') return;
-          const entryFile = path.join(
-            this.environment.getTopLevelConfig().environments.rsc!.build.outDir,
-            `index.js`,
-          );
-          const entryFileUrl = pathToFileURL(entryFile).href;
-          const entry: typeof import('./entry.rsc') = await import(
-            entryFileUrl
-          );
-          // cf. packages/waku/src/router/fs-router.ts (__WAKU_SERVER_PLATFORM_DATA__.fsRouterFiles)
-          unstable_getBuildOptions().unstable_phase = 'buildDeploy';
-          try {
-            await entry.handleBuild();
-          } catch (e) {
-            this.warn(
-              `skipped 'handleBuild' failure: ${e instanceof Error ? e.message : e}`,
-            );
-          }
-          const fsRouterFiles = await unstable_getPlatformData('fsRouterFiles');
-          if (fsRouterFiles) {
-            fs.writeFileSync(
-              path.join(
-                this.environment.getTopLevelConfig().environments.rsc!.build
-                  .outDir,
-                '__waku_set_platform_data.js',
-              ),
-              `
-                globalThis.__WAKU_SERVER_PLATFORM_DATA__ ??= {};
-                __WAKU_SERVER_PLATFORM_DATA__.fsRouterFiles = [${JSON.stringify(fsRouterFiles)}];
-              `,
-            );
-          }
-        },
-      },
-      // expose handleBuild data during runtime
-      // (this is a conventional Vite pattern. cf. https://github.com/hi-ogawa/vite-plugins/blob/2f41ae1351da17a169d918114a494873c46ba61f/packages/rsc/src/plugin.ts#L587-L603)
+      // expose `__WAKU_SERVER_PLATFORM_DATA__.fsRouterFiles` for build.
+      // for now we manually crawl `src/pages/` to collect all files.
+      // TODO: support `handleBuild` API.
+      name: 'rsc:waku:set-platform-data',
       resolveId(source) {
         if (source === 'virtual:vite-rsc-waku/set-platform-data') {
           assert.equal(this.environment.name, 'rsc');
@@ -267,9 +224,9 @@ export default function wakuViteRscPlugin(wakuOptions?: {
           return '\0' + source;
         }
       },
-      load(id) {
-        // no-op during dev
+      async load(id) {
         if (id === '\0virtual:vite-rsc-waku/set-platform-data') {
+          // no-op during dev
           assert.equal(this.environment.mode, 'dev');
           return `export {}`;
         }
@@ -287,6 +244,25 @@ export default function wakuViteRscPlugin(wakuOptions?: {
             () => replacement,
           );
         }
+      },
+      writeBundle: {
+        order: 'post',
+        async handler(_options, _bundle) {
+          if (this.environment.name !== 'ssr') return;
+          const { glob } = await import('tinyglobby');
+          const fsRouterFiles = await glob(`**/*.{ts,tsx,js,jsx,mjs,cjs}`, {
+            cwd: `src/pages/`,
+          });
+          const setPlatformDataCode = `\
+            globalThis.__WAKU_SERVER_PLATFORM_DATA__ ??= {};
+            __WAKU_SERVER_PLATFORM_DATA__.fsRouterFiles = [${JSON.stringify(fsRouterFiles)}];
+          `;
+          const setPlatformDataFile = path.join(
+            this.environment.getTopLevelConfig().environments.rsc!.build.outDir,
+            '__waku_set_platform_data.js',
+          );
+          fs.writeFileSync(setPlatformDataFile, setPlatformDataCode);
+        },
       },
     },
   ];

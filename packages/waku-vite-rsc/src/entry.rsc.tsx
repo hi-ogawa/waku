@@ -21,9 +21,7 @@ type HandleReq = {
 
 // cf. packages/waku/src/lib/middleware/handler.ts `handler`
 export default async function handler(request: Request): Promise<Response> {
-  if (!import.meta.env.DEV) {
-    await import('virtual:vite-rsc-waku/set-platform-data');
-  }
+  await import('virtual:vite-rsc-waku/set-platform-data');
 
   // eslint-disable-next-line
   const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
@@ -151,72 +149,6 @@ export default async function handler(request: Request): Promise<Response> {
   }
   response ??= new Response('[no-render-result]', { status: 404 });
   return response;
-}
-
-export async function handleBuild() {
-  // eslint-disable-next-line
-  const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
-    .default;
-
-  const implementation: HandleRequestImplementation = {
-    async renderRsc(elements, _options) {
-      return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
-        temporaryReferences: undefined,
-      });
-    },
-    async renderHtml(
-      elements,
-      html,
-      options?: { rscPath?: string; actionResult?: any },
-    ) {
-      const ssrEntryModule = await import.meta.viteRsc.loadModule<
-        typeof import('./entry.ssr.tsx')
-      >('ssr', 'index');
-
-      const rscElementsStream =
-        ReactServer.renderToReadableStream<RscElementsPayload>(elements);
-
-      const rscHtmlStream =
-        ReactServer.renderToReadableStream<RscHtmlPayload>(html);
-
-      const htmlStream = await ssrEntryModule.renderHTML(
-        rscElementsStream,
-        rscHtmlStream,
-        {
-          formState: options?.actionResult,
-          rscPath: options?.rscPath,
-        },
-      );
-      return {
-        body: htmlStream as any,
-        headers: { 'content-type': 'text/html' },
-      };
-    },
-  };
-
-  const buildConfig = wakuServerEntry.handleBuild({
-    renderRsc: implementation.renderRsc,
-    renderHtml: implementation.renderHtml,
-    rscPath2pathname: (rscPath) => {
-      0 && console.log('[rscPath2pathname]', { rscPath });
-      return rscPath;
-    },
-    unstable_collectClientModules: async (elements) => {
-      0 && console.log('[unstable_collectClientModules]', { elements });
-      return [];
-    },
-    unstable_generatePrefetchCode: (rscPaths, moduleIds) => {
-      0 &&
-        console.log('[unstable_generatePrefetchCode]', { rscPaths, moduleIds });
-      return '';
-    },
-  });
-
-  if (buildConfig) {
-    for await (const buildTask of buildConfig) {
-      0 && console.log('[buildTask]', buildTask);
-    }
-  }
 }
 
 // cf. packages/waku/src/lib/renderers/utils.ts
