@@ -145,7 +145,7 @@ export default async function handler(request: Request): Promise<Response> {
     implementation,
   );
 
-  let handleRes: HandlerRes = {};
+  const handleRes: HandlerRes = {};
   if (wakuResult instanceof ReadableStream) {
     handleRes.body = wakuResult;
   } else if (wakuResult) {
