@@ -16,6 +16,7 @@ import type { ChildProcess } from 'node:child_process';
 import { expect, test as basicTest } from '@playwright/test';
 import type { ConsoleMessage, Page } from '@playwright/test';
 import { error, info } from '@actions/core';
+import { stripVTControlCharacters } from 'node:util';
 
 export const FETCH_ERROR_MESSAGES = {
   chromium: 'Failed to fetch',
@@ -31,7 +32,7 @@ export type TestOptions = {
 export async function findWakuPort(cp: ChildProcess): Promise<number> {
   return new Promise((resolve, reject) => {
     function listener(data: unknown) {
-      const str = `${data}`;
+      const str = stripVTControlCharacters(`${data}`);
       const match = str.match(/http:\/\/localhost:(\d+)/g);
       if (match) {
         clearTimeout(timer);
@@ -132,9 +133,14 @@ export const test = basicTest.extend<TestOptions>({
 });
 
 export const prepareNormalSetup = (fixtureName: string) => {
-  const waku = fileURLToPath(
+  let waku = fileURLToPath(
     new URL('../packages/waku/dist/cli.js', import.meta.url),
   );
+  if (process.env.TEST_VITE_RSC) {
+    waku = fileURLToPath(
+      new URL('../packages/waku-vite-rsc/dist/cli.js', import.meta.url),
+    );
+  }
   const fixtureDir = fileURLToPath(
     new URL('./fixtures/' + fixtureName, import.meta.url),
   );

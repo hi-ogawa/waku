@@ -130,3 +130,50 @@ jobs:
             !**/node_modules
           retention-days: 30
           if-no-files-found: ignore
+
+  e2e-vite-rsc:
+    name: E2E (vite-rsc) on ${{ matrix.os }} (Node ${{ matrix.version }}) - (${{ matrix.shared }}/4)${{ inputs.react_version && format(' with react@{0}', inputs.react_version) || '' }}
+    needs:
+      - build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        version: [22.7.0]
+        # shared: [1, 2, 3, 4]
+        # shardTotal: [4]
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        # version: [24.0.0, 22.7.0, 20.8.0]
+        # exclude:
+        #   - os: macos-latest
+        #     version: 20.8.0
+        #   - os: windows-latest
+        #     version: 20.8.0
+        #   - os: macos-latest
+        #     version: 22.7.0
+        #   - os: windows-latest
+        #     version: 22.7.0
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || '' }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.version }}
+          cache: ${{ !inputs.react_version && 'pnpm' || '' }}
+      - if: ${{ inputs.react_version }}
+        run: |
+          pnpm -r update react@${{ inputs.react_version }} react-dom@${{ inputs.react_version }} react-server-dom-webpack@${{ inputs.react_version }}
+      - run: pnpm install
+      - run: pnpm run compile
+      - name: Install Playwright
+        id: install-playwright
+        uses: ./.github/actions/playwright
+      - run: pnpm exec playwright test define-router.spec
+        timeout-minutes: 15
+        env:
+          TEMP_DIR: ${{ runner.temp }}
+          VITE_EXPERIMENTAL_WAKU_ROUTER: true
+          TEST_VITE_RSC: true
