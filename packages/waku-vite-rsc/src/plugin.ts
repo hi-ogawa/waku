@@ -205,6 +205,32 @@ export default function wakuViteRscPlugin(wakuOptions?: {
         }
       },
     },
+    {
+      name: 'rsc:waku:handle-build',
+      apply: 'build',
+      applyToEnvironment: (environment) => environment.name === 'ssr',
+      writeBundle: {
+        order: 'post',
+        async handler(_options, _bundle) {
+          const entryFile = path.join(
+            this.environment.getTopLevelConfig().environments.rsc!.build.outDir,
+            `index.js`,
+          );
+          const entryFileUrl = pathToFileURL(entryFile).href;
+          const entry: typeof import('./entry.rsc') = await import(
+            /* @vite-ignore */ entryFileUrl
+          );
+          try {
+            await entry.handleBuild();
+          } catch (e) {
+            console.error(
+              `[WARNING:vite-rsc:waku] skipped handleBuild failure:`,
+              e instanceof Error ? e.message : e,
+            );
+          }
+        },
+      },
+    },
   ];
 }
 

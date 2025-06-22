@@ -1,6 +1,8 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import type React from 'react';
 import type { unstable_defineEntries } from 'waku/minimal/server';
+// eslint-disable-next-line
+import wakuServerEntry from 'virtual:vite-rsc-waku/server-entry';
 
 export type RscElementsPayload = Record<string, unknown>;
 // eslint-disable-next-line
@@ -21,10 +23,6 @@ type HandleReq = {
 
 // cf. packages/waku/src/lib/middleware/handler.ts `handler`
 export default async function handler(request: Request): Promise<Response> {
-  // eslint-disable-next-line
-  const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
-    .default;
-
   const url = new URL(request.url);
   const req: HandleReq = {
     body: request.body,
@@ -147,6 +145,67 @@ export default async function handler(request: Request): Promise<Response> {
   }
   response ??= new Response('[no-render-result]', { status: 404 });
   return response;
+}
+
+export async function handleBuild() {
+  const implementation: HandleRequestImplementation = {
+    async renderRsc(elements, _options) {
+      return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
+        temporaryReferences: undefined,
+      });
+    },
+    async renderHtml(
+      elements,
+      html,
+      options?: { rscPath?: string; actionResult?: any },
+    ) {
+      const ssrEntryModule = await import.meta.viteRsc.loadModule<
+        typeof import('./entry.ssr.tsx')
+      >('ssr', 'index');
+
+      const rscElementsStream =
+        ReactServer.renderToReadableStream<RscElementsPayload>(elements);
+
+      const rscHtmlStream =
+        ReactServer.renderToReadableStream<RscHtmlPayload>(html);
+
+      const htmlStream = await ssrEntryModule.renderHTML(
+        rscElementsStream,
+        rscHtmlStream,
+        {
+          formState: options?.actionResult,
+          rscPath: options?.rscPath,
+        },
+      );
+      return {
+        body: htmlStream as any,
+        headers: { 'content-type': 'text/html' },
+      };
+    },
+  };
+
+  const buildConfig = wakuServerEntry.handleBuild({
+    renderRsc: implementation.renderRsc,
+    renderHtml: implementation.renderHtml,
+    rscPath2pathname: (rscPath) => {
+      console.log('[rscPath2pathname]', { rscPath });
+      return rscPath;
+    },
+    unstable_collectClientModules: async (elements) => {
+      console.log('[unstable_collectClientModules]', { elements });
+      return [];
+    },
+    unstable_generatePrefetchCode: (rscPaths, moduleIds) => {
+      console.log('[unstable_generatePrefetchCode]', { rscPaths, moduleIds });
+      return '';
+    },
+  });
+
+  if (buildConfig) {
+    for await (const buildTask of buildConfig) {
+      console.log('[buildTask]', buildTask);
+    }
+  }
 }
 
 // cf. packages/waku/src/lib/renderers/utils.ts
