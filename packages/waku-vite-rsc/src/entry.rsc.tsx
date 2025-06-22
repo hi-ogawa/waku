@@ -19,6 +19,12 @@ type HandleReq = {
   headers: Readonly<Record<string, string>>;
 };
 
+type HandlerRes = {
+  body?: ReadableStream;
+  headers?: Record<string, string | string[]>;
+  status?: number;
+};
+
 // cf. packages/waku/src/lib/middleware/handler.ts `handler`
 export default async function handler(request: Request): Promise<Response> {
   // eslint-disable-next-line
@@ -74,6 +80,7 @@ export default async function handler(request: Request): Promise<Response> {
       };
     }
   } else if (request.method === 'POST') {
+    // TODO: handle POST API request
     // server action: no js (progressive enhancement)
     const formData = await request.formData();
     const decodedAction = await ReactServer.decodeAction(formData);
@@ -138,18 +145,27 @@ export default async function handler(request: Request): Promise<Response> {
     implementation,
   );
 
-  let response: Response;
-  if (wakuResult) {
-    if (wakuResult instanceof ReadableStream) {
-      response = new Response(wakuResult);
-    } else if (wakuResult.body) {
-      response = new Response(wakuResult.body, {
-        headers: wakuResult.headers as any,
-      });
+  let handleRes: HandlerRes = {};
+  if (wakuResult instanceof ReadableStream) {
+    handleRes.body = wakuResult;
+  } else if (wakuResult) {
+    if (wakuResult.body) {
+      handleRes.body = wakuResult.body;
+    }
+    if (wakuResult.status) {
+      handleRes.status = wakuResult.status;
+    }
+    if (wakuResult.headers) {
+      Object.assign((handleRes.headers ||= {}), wakuResult.headers);
     }
   }
-  response ??= new Response('[no-render-result]', { status: 404 });
-  return response;
+  if (handleRes.body || handleRes.status) {
+    return new Response(handleRes.body || '', {
+      status: handleRes.status || 200,
+      headers: handleRes.headers as any,
+    });
+  }
+  return new Response('[vite-rsc] not found', { status: 404 });
 }
 
 // cf. packages/waku/src/lib/renderers/utils.ts
