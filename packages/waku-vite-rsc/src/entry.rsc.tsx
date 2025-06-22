@@ -80,19 +80,32 @@ export default async function handler(request: Request): Promise<Response> {
       };
     }
   } else if (request.method === 'POST') {
-    // TODO: handle POST API request
-    // server action: no js (progressive enhancement)
-    const formData = await request.formData();
-    const decodedAction = await ReactServer.decodeAction(formData);
-    wakuInput = {
-      type: 'action',
-      fn: async () => {
-        const result = await decodedAction();
-        return await ReactServer.decodeFormState(result, formData);
-      },
-      pathname: url.pathname,
-      req,
-    };
+    // cf. packages/waku/src/lib/renderers/rsc.ts `decodePostAction`
+    const contentType = request.headers.get('content-type');
+    if (
+      typeof contentType === 'string' &&
+      contentType.startsWith('multipart/form-data')
+    ) {
+      // server action: no js (progressive enhancement)
+      const formData = await request.formData();
+      const decodedAction = await ReactServer.decodeAction(formData);
+      wakuInput = {
+        type: 'action',
+        fn: async () => {
+          const result = await decodedAction();
+          return await ReactServer.decodeFormState(result, formData);
+        },
+        pathname: url.pathname,
+        req,
+      };
+    } else {
+      // POST API request
+      wakuInput = {
+        type: 'custom',
+        pathname: url.pathname,
+        req,
+      };
+    }
   } else {
     // SSR
     wakuInput = {
