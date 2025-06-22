@@ -1,8 +1,6 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import type React from 'react';
 import type { unstable_defineEntries } from 'waku/minimal/server';
-// eslint-disable-next-line
-import wakuServerEntry from 'virtual:vite-rsc-waku/server-entry';
 
 export type RscElementsPayload = Record<string, unknown>;
 // eslint-disable-next-line
@@ -23,6 +21,14 @@ type HandleReq = {
 
 // cf. packages/waku/src/lib/middleware/handler.ts `handler`
 export default async function handler(request: Request): Promise<Response> {
+  if (!import.meta.env.DEV) {
+    await import('virtual:vite-rsc-waku/set-platform-data');
+  }
+
+  // eslint-disable-next-line
+  const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
+    .default;
+
   const url = new URL(request.url);
   const req: HandleReq = {
     body: request.body,
@@ -148,6 +154,10 @@ export default async function handler(request: Request): Promise<Response> {
 }
 
 export async function handleBuild() {
+  // eslint-disable-next-line
+  const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
+    .default;
+
   const implementation: HandleRequestImplementation = {
     async renderRsc(elements, _options) {
       return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
@@ -188,22 +198,23 @@ export async function handleBuild() {
     renderRsc: implementation.renderRsc,
     renderHtml: implementation.renderHtml,
     rscPath2pathname: (rscPath) => {
-      console.log('[rscPath2pathname]', { rscPath });
+      0 && console.log('[rscPath2pathname]', { rscPath });
       return rscPath;
     },
     unstable_collectClientModules: async (elements) => {
-      console.log('[unstable_collectClientModules]', { elements });
+      0 && console.log('[unstable_collectClientModules]', { elements });
       return [];
     },
     unstable_generatePrefetchCode: (rscPaths, moduleIds) => {
-      console.log('[unstable_generatePrefetchCode]', { rscPaths, moduleIds });
+      0 &&
+        console.log('[unstable_generatePrefetchCode]', { rscPaths, moduleIds });
       return '';
     },
   });
 
   if (buildConfig) {
     for await (const buildTask of buildConfig) {
-      console.log('[buildTask]', buildTask);
+      0 && console.log('[buildTask]', buildTask);
     }
   }
 }

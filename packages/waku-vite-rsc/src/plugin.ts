@@ -1,8 +1,18 @@
-import type { EnvironmentOptions, PluginOption } from 'vite';
+import {
+  normalizePath,
+  type EnvironmentOptions,
+  type PluginOption,
+} from 'vite';
 import react from '@vitejs/plugin-react';
 import rsc from '@hiogawa/vite-rsc/plugin';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {
+  unstable_getBuildOptions,
+  unstable_getPlatformData,
+} from 'waku/server';
 
 const PKG_NAME = 'waku-vite-rsc';
 
@@ -173,7 +183,6 @@ export default function wakuViteRscPlugin(wakuOptions?: {
     },
     {
       // cf. packages/waku/src/lib/plugins/vite-plugin-rsc-hmr.ts
-      // TODO: this doesn't seem enough for fs-router
       name: 'rsc:waku:patch-server-hmr',
       apply: 'serve',
       async transform(code, id) {
@@ -205,30 +214,79 @@ export default function wakuViteRscPlugin(wakuOptions?: {
         }
       },
     },
+    // TODO: actually we don't need to handleBuild yet for `__WAKU_SERVER_PLATFORM_DATA__.fsRouterFiles`
+    // remove it for simplicity and propose it separately.
     {
       name: 'rsc:waku:handle-build',
-      apply: 'build',
-      applyToEnvironment: (environment) => environment.name === 'ssr',
+      // run `handleBuild` after the build
       writeBundle: {
         order: 'post',
         async handler(_options, _bundle) {
+          if (this.environment.name !== 'ssr') return;
           const entryFile = path.join(
             this.environment.getTopLevelConfig().environments.rsc!.build.outDir,
             `index.js`,
           );
           const entryFileUrl = pathToFileURL(entryFile).href;
           const entry: typeof import('./entry.rsc') = await import(
-            /* @vite-ignore */ entryFileUrl
+            entryFileUrl
           );
+          // cf. packages/waku/src/router/fs-router.ts (__WAKU_SERVER_PLATFORM_DATA__.fsRouterFiles)
+          unstable_getBuildOptions().unstable_phase = 'buildDeploy';
           try {
             await entry.handleBuild();
           } catch (e) {
-            console.error(
-              `[WARNING:vite-rsc:waku] skipped handleBuild failure:`,
-              e instanceof Error ? e.message : e,
+            this.warn(
+              `skipped 'handleBuild' failure: ${e instanceof Error ? e.message : e}`,
+            );
+          }
+          const fsRouterFiles = await unstable_getPlatformData('fsRouterFiles');
+          if (fsRouterFiles) {
+            fs.writeFileSync(
+              path.join(
+                this.environment.getTopLevelConfig().environments.rsc!.build
+                  .outDir,
+                '__waku_set_platform_data.js',
+              ),
+              `
+                globalThis.__WAKU_SERVER_PLATFORM_DATA__ ??= {};
+                __WAKU_SERVER_PLATFORM_DATA__.fsRouterFiles = [${JSON.stringify(fsRouterFiles)}];
+              `,
             );
           }
         },
+      },
+      // expose handleBuild data during runtime
+      // (this is a conventional Vite pattern. cf. https://github.com/hi-ogawa/vite-plugins/blob/2f41ae1351da17a169d918114a494873c46ba61f/packages/rsc/src/plugin.ts#L587-L603)
+      resolveId(source) {
+        if (source === 'virtual:vite-rsc-waku/set-platform-data') {
+          assert.equal(this.environment.name, 'rsc');
+          if (this.environment.mode === 'build') {
+            return { id: source, external: true, moduleSideEffects: true };
+          }
+          return '\0' + source;
+        }
+      },
+      load(id) {
+        // no-op during dev
+        if (id === '\0virtual:vite-rsc-waku/set-platform-data') {
+          assert.equal(this.environment.mode, 'dev');
+          return `export {}`;
+        }
+      },
+      renderChunk(code, chunk) {
+        if (code.includes(`virtual:vite-rsc-waku/set-platform-data`)) {
+          const replacement = normalizeRelativePath(
+            path.relative(
+              path.join(chunk.fileName, '..'),
+              '__waku_set_platform_data.js',
+            ),
+          );
+          return code.replaceAll(
+            'virtual:vite-rsc-waku/set-platform-data',
+            () => replacement,
+          );
+        }
       },
     },
   ];
@@ -266,3 +324,8 @@ if (globalThis.__WAKU_HYDRATE__) {
   createRoot(document).render(rootElement);
 }
 `;
+
+function normalizeRelativePath(s: string) {
+  s = normalizePath(s);
+  return s[0] === '.' ? s : './' + s;
+}
