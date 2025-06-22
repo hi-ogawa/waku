@@ -168,9 +168,10 @@ jobs:
           pnpm -r update react@${{ inputs.react_version }} react-dom@${{ inputs.react_version }} react-server-dom-webpack@${{ inputs.react_version }}
       - run: pnpm install
       - run: pnpm run compile
-      - name: Install Playwright
-        id: install-playwright
-        uses: ./.github/actions/playwright
+      - run: pnpm exec playwright install --with-deps
+      # - name: Install Playwright
+      #   id: install-playwright
+      #   uses: ./.github/actions/playwright
       - run: pnpm exec playwright test define-router.spec
         timeout-minutes: 15
         env:
