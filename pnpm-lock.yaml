@@ -1000,31 +1000,6 @@ importers:
         specifier: 5.8.3
         version: 5.8.3
 
-  examples/31_minimal-vite-rsc:
-    dependencies:
-      react:
-        specifier: 19.1.0
-        version: 19.1.0
-      react-dom:
-        specifier: 19.1.0
-        version: 19.1.0(react@19.1.0)
-      waku:
-        specifier: 0.23.2
-        version: link:../../packages/waku
-      waku-vite-rsc:
-        specifier: workspace:*
-        version: link:../../packages/waku-vite-rsc
-    devDependencies:
-      '@types/react':
-        specifier: 19.1.6
-        version: 19.1.6
-      '@types/react-dom':
-        specifier: 19.1.6
-        version: 19.1.6(@types/react@19.1.6)
-      typescript:
-        specifier: 5.8.3
-        version: 5.8.3
-
   examples/32_minimal_js:
     dependencies:
       react:
