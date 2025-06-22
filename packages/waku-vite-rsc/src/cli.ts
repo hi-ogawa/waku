@@ -25,8 +25,10 @@ function main() {
 
   let configFile: string | undefined;
 
-  // auto setup vite.config.ts in a hidden place
-  if (!fs.existsSync('vite.config.ts')) {
+  if (fs.existsSync('waku-vite-rsc.config.ts')) {
+    configFile = 'waku-vite-rsc.config.ts';
+  } else if (!fs.existsSync('vite.config.ts')) {
+    // auto setup vite.config.ts in a hidden place
     const configCode = `\
 import waku from "waku-vite-rsc/plugin";
 
