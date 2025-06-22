@@ -182,8 +182,12 @@ export default function wakuViteRscPlugin(wakuOptions?: {
       name: 'rsc:waku:patch-server-hmr',
       apply: 'serve',
       async transform(code, id) {
-        if (wakuOptions?.serverHmr !== true) {return;}
-        if (this.environment.name !== 'client') {return;}
+        if (wakuOptions?.serverHmr !== true) {
+          return;
+        }
+        if (this.environment.name !== 'client') {
+          return;
+        }
         if (id.includes('/waku/dist/minimal/client.js')) {
           return code.replace(
             /\nexport const fetchRsc = \(.*?\)=>\{/,
@@ -248,7 +252,9 @@ export default function wakuViteRscPlugin(wakuOptions?: {
       writeBundle: {
         order: 'post',
         async handler(_options, _bundle) {
-          if (this.environment.name !== 'ssr') {return;}
+          if (this.environment.name !== 'ssr') {
+            return;
+          }
           const { glob } = await import('tinyglobby');
           const fsRouterFiles = await glob(`**/*.{ts,tsx,js,jsx,mjs,cjs}`, {
             cwd: `src/pages/`,

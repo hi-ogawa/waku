@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -26,19 +27,17 @@ function main() {
 
   // auto setup vite.config.ts in a hidden place
   if (!fs.existsSync('vite.config.ts')) {
-    configFile = 'node_modules/.cache/waku-vite-rsc/vite.config.0.ts';
-    if (!fs.existsSync(configFile)) {
-      fs.mkdirSync(path.dirname(configFile), { recursive: true });
-      fs.writeFileSync(
-        configFile,
-        `\
+    const configCode = `\
 import waku from "waku-vite-rsc/plugin";
 
 export default {
   plugins: [waku()],
 };
-`,
-      );
+`;
+    configFile = `node_modules/.cache/waku-vite-rsc/vite.config.${hashString(configCode)}.ts`;
+    if (!fs.existsSync(configFile)) {
+      fs.mkdirSync(path.dirname(configFile), { recursive: true });
+      fs.writeFileSync(configFile, configCode);
     }
   }
 
@@ -58,6 +57,10 @@ export default {
   proc.on('close', (code) => {
     process.exitCode = code ?? 1;
   });
+}
+
+function hashString(v: string) {
+  return createHash('sha256').update(v).digest().toString('hex').slice(0, 10);
 }
 
 main();
