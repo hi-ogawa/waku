@@ -65,7 +65,9 @@ export default function wakuViteRscPlugin(wakuOptions?: {
           },
           build: {
             // top-level-await in packages/waku/src/lib/middleware/context.ts
-            target: name !== 'client' ? 'esnext' : undefined,
+            target:
+              config.build?.target ??
+              (name !== 'client' ? 'esnext' : undefined),
           },
         };
       },
