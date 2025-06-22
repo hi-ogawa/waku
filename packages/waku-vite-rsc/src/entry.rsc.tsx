@@ -21,6 +21,7 @@ type HandleReq = {
 
 // cf. packages/waku/src/lib/middleware/handler.ts `handler`
 export default async function handler(request: Request): Promise<Response> {
+  // eslint-disable-next-line
   await import('virtual:vite-rsc-waku/set-platform-data');
 
   // eslint-disable-next-line
