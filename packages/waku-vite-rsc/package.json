@@ -22,7 +22,7 @@
     "compile": "tsdown"
   },
   "dependencies": {
-    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@aff7276",
+    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@f9e7e2d",
     "@vitejs/plugin-react": "4.5.1",
     "tinyglobby": "^0.2.14",
     "vite": "6.3.5"

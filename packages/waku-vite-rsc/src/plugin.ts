@@ -100,23 +100,6 @@ export default function wakuViteRscPlugin(wakuOptions?: {
           );
         }
       },
-      resolveId: {
-        order: 'pre',
-        handler(id, importer) {
-          // warning if `{minimal,router}/client.js` is internally resolved inside rsc environment
-          if (
-            importer?.includes('/node_modules/') &&
-            id.endsWith('/client.js')
-          ) {
-            if (this.environment.name === 'rsc') {
-              console.log(
-                '[vite-rsc:waku] client boundary inside server package?',
-                { id, importer },
-              );
-            }
-          }
-        },
-      },
     },
     {
       name: 'rsc:waku:user-entries',
