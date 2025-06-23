@@ -172,7 +172,14 @@ jobs:
       # - name: Install Playwright
       #   id: install-playwright
       #   uses: ./.github/actions/playwright
-      - run: pnpm exec playwright test define-router.spec
+      - run: |
+          pnpm exec playwright test \
+            --project chromium-dev \
+              /create-pages \
+              /define-router \
+              /fs-router \
+              /rsc-basic \
+              /ssr-basic
         timeout-minutes: 15
         env:
           TEMP_DIR: ${{ runner.temp }}

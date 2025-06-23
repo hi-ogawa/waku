@@ -45,7 +45,6 @@
     "terminate": "^2.8.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.33.1",
-    "waku": "workspace:*",
-    "waku-vite-rsc": "workspace:*"
+    "waku": "workspace:*"
   }
 }

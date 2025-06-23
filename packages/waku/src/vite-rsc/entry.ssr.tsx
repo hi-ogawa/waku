@@ -3,17 +3,18 @@ import * as ReactClient from '@hiogawa/vite-rsc/ssr';
 import React from 'react';
 import type { ReactFormState } from 'react-dom/client';
 import * as ReactDOMServer from 'react-dom/server.edge';
-import { INTERNAL_ServerRoot } from 'waku/minimal/client';
-import type { RscElementsPayload, RscHtmlPayload } from './entry.rsc';
+import { INTERNAL_ServerRoot } from '../minimal/client.js';
+import type { RscElementsPayload, RscHtmlPayload } from './entry.rsc.js';
+import { fakeFetchCode } from '../lib/renderers/html.js';
 
 export async function renderHTML(
   rscStream: ReadableStream<Uint8Array>,
   rscHtmlStream: ReadableStream<Uint8Array>,
   options?: {
-    rscPath?: string;
-    formState?: ReactFormState;
-    nonce?: string;
-    debugNojs?: boolean;
+    rscPath?: string | undefined;
+    formState?: ReactFormState | undefined;
+    nonce?: string | undefined;
+    debugNojs?: boolean | undefined;
   },
 ): Promise<ReadableStream<Uint8Array>> {
   // cf. packages/waku/src/lib/renderers/html.ts `renderHtml`
@@ -42,19 +43,19 @@ export async function renderHTML(
   const htmlStream = await ReactDOMServer.renderToReadableStream(<SsrRoot />, {
     bootstrapScriptContent: options?.debugNojs
       ? undefined
-      : getBootstrapPreamble({ rscPathForFakeFetch: options?.rscPath || '' }) +
+      : getBootstrapPreamble({ rscPath: options?.rscPath || '' }) +
         bootstrapScriptContent,
     nonce: options?.nonce,
     // no types
     ...{ formState: options?.formState },
-  });
+  } as any);
 
   let responseStream: ReadableStream<Uint8Array> = htmlStream;
   if (!options?.debugNojs) {
     responseStream = responseStream.pipeThrough(
       injectRscStreamToHtml(stream2, {
         nonce: options?.nonce,
-      }),
+      } as any),
     );
   }
 
@@ -62,28 +63,25 @@ export async function renderHTML(
 }
 
 // cf. packages/waku/src/lib/renderers/html.ts `parseHtmlHead`
-function getBootstrapPreamble(options: { rscPathForFakeFetch: string }) {
+function getBootstrapPreamble(options: { rscPath: string }) {
   return `
     globalThis.__WAKU_HYDRATE__ = true;
     globalThis.__WAKU_PREFETCHED__ = {
-      ${JSON.stringify(options.rscPathForFakeFetch)}: ${FAKE_FETCH_CODE}
+      ${JSON.stringify(options.rscPath)}: ${fakeFetchCode}
     };
   `;
 }
 
-const FAKE_FETCH_CODE = `
-Promise.resolve(new Response(new ReadableStream({
-  start(c) {
-    const d = (self.__FLIGHT_DATA ||= []);
-    const t = new TextEncoder();
-    const f = (s) => c.enqueue(typeof s === 'string' ? t.encode(s) : s);
-    d.forEach(f);
-    d.push = f;
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => c.close());
-    } else {
-      c.close();
-    }
-  }
-})))
-`;
+export async function renderHtmlFallback() {
+  const bootstrapScriptContent =
+    await import.meta.viteRsc.loadBootstrapScriptContent('index');
+  const fallback = (
+    <html>
+      <body></body>
+    </html>
+  );
+  const htmlStream = await ReactDOMServer.renderToReadableStream(fallback, {
+    bootstrapScriptContent,
+  } as any);
+  return htmlStream;
+}

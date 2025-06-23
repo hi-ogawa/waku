@@ -1,6 +1,10 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import type React from 'react';
-import type { unstable_defineEntries } from 'waku/minimal/server';
+import type { unstable_defineEntries } from '../minimal/server.js';
+import { decodeFuncId, decodeRscPath } from '../lib/renderers/utils.js';
+import type { HandlerReq, HandlerRes } from '../lib/types.js';
+
+// TODO: refactor common logic from packages/waku/src/lib/middleware/handler.ts
 
 export type RscElementsPayload = Record<string, unknown>;
 // eslint-disable-next-line
@@ -12,19 +16,6 @@ type HandleRequestImplementation = Parameters<
   WakuServerEntry['handleRequest']
 >[1];
 
-type HandleReq = {
-  body: ReadableStream | null;
-  url: URL;
-  method: string;
-  headers: Readonly<Record<string, string>>;
-};
-
-type HandlerRes = {
-  body?: ReadableStream;
-  headers?: Record<string, string | string[]>;
-  status?: number;
-};
-
 // cf. packages/waku/src/lib/middleware/handler.ts `handler`
 export default async function handler(request: Request): Promise<Response> {
   // eslint-disable-next-line
@@ -35,7 +26,7 @@ export default async function handler(request: Request): Promise<Response> {
     .default;
 
   const url = new URL(request.url);
-  const req: HandleReq = {
+  const req: HandlerReq = {
     body: request.body,
     url,
     method: request.method,
@@ -158,57 +149,38 @@ export default async function handler(request: Request): Promise<Response> {
     implementation,
   );
 
-  const handleRes: HandlerRes = {};
+  const res: HandlerRes = {};
   if (wakuResult instanceof ReadableStream) {
-    handleRes.body = wakuResult;
+    res.body = wakuResult;
   } else if (wakuResult) {
     if (wakuResult.body) {
-      handleRes.body = wakuResult.body;
+      res.body = wakuResult.body;
     }
     if (wakuResult.status) {
-      handleRes.status = wakuResult.status;
+      res.status = wakuResult.status;
     }
     if (wakuResult.headers) {
-      Object.assign((handleRes.headers ||= {}), wakuResult.headers);
+      Object.assign((res.headers ||= {}), wakuResult.headers);
     }
   }
-  if (handleRes.body || handleRes.status) {
-    return new Response(handleRes.body || '', {
-      status: handleRes.status || 200,
-      headers: handleRes.headers as any,
+  if (res.body || res.status) {
+    return new Response(res.body || '', {
+      status: res.status || 200,
+      headers: res.headers as any,
     });
   }
-  return new Response('[vite-rsc] not found', { status: 404 });
+
+  if (url.pathname === '/') {
+    const ssrEntryModule = await import.meta.viteRsc.loadModule<
+      typeof import('./entry.ssr.tsx')
+    >('ssr', 'index');
+    const htmlFallbackStream = await ssrEntryModule.renderHtmlFallback();
+    return new Response(htmlFallbackStream, {
+      headers: {
+        'content-type': 'text/html;charset=utf-8',
+      },
+    });
+  }
+
+  return new Response('404 Not Found', { status: 404 });
 }
-
-// cf. packages/waku/src/lib/renderers/utils.ts
-const decodeRscPath = (rscPath: string) => {
-  if (!rscPath.endsWith('.txt')) {
-    const err = new Error('Invalid encoded rscPath');
-    (err as any).statusCode = 400;
-    throw err;
-  }
-  rscPath = rscPath.slice(0, -'.txt'.length);
-  if (rscPath.startsWith('_')) {
-    rscPath = rscPath.slice(1);
-  }
-  if (rscPath.endsWith('_')) {
-    rscPath = rscPath.slice(0, -1);
-  }
-  return rscPath;
-};
-
-const FUNC_PREFIX = 'F/';
-
-const decodeFuncId = (encoded: string) => {
-  if (!encoded.startsWith(FUNC_PREFIX)) {
-    return null;
-  }
-  const index = encoded.lastIndexOf('/');
-  const file = encoded.slice(FUNC_PREFIX.length, index);
-  const name = encoded.slice(index + 1);
-  if (file.startsWith('_')) {
-    return file.slice(1) + '#' + name;
-  }
-  return file + '#' + name;
-};

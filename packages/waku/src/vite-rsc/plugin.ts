@@ -10,14 +10,18 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const PKG_NAME = 'waku-vite-rsc';
+// TODO: refactor and reuse common plugins from lib/plugins
+
+const PKG_NAME = 'waku';
 
 export default function wakuViteRscPlugin(wakuOptions?: {
   serverHmr?: boolean | 'reload';
 }): PluginOption {
   return [
     react(),
-    rsc(),
+    rsc({
+      ignoredClientInServerPackageWarning: [PKG_NAME],
+    }),
     {
       name: 'rsc:waku',
       config() {
@@ -26,7 +30,7 @@ export default function wakuViteRscPlugin(wakuOptions?: {
             build: {
               rollupOptions: {
                 input: {
-                  index: `${PKG_NAME}/${entry}`,
+                  index: `${PKG_NAME}/vite-rsc/${entry}`,
                 },
               },
             },
@@ -67,6 +71,7 @@ export default function wakuViteRscPlugin(wakuOptions?: {
             noExternal: [PKG_NAME],
           },
           optimizeDeps: {
+            include: name === 'ssr' ? [`${PKG_NAME} > html-react-parser`] : [],
             exclude: [PKG_NAME, 'waku/minimal/client', 'waku/router/client'],
           },
           build: {
@@ -76,29 +81,6 @@ export default function wakuViteRscPlugin(wakuOptions?: {
               (name !== 'client' ? 'esnext' : undefined),
           },
         };
-      },
-    },
-    {
-      // don't violate https://github.com/hi-ogawa/rsc-tests
-      name: 'rsc:waku:fix-internal-client-boundary',
-      transform(code, id) {
-        if (id.includes('/node_modules/waku/dist/router/create-pages.js')) {
-          return code
-            .replaceAll(
-              `from '../minimal/client.js'`,
-              `from 'waku/minimal/client'`,
-            )
-            .replaceAll(
-              `from '../router/client.js'`,
-              `from 'waku/router/client'`,
-            );
-        }
-        if (id.includes('/node_modules/waku/dist/router/define-router.js')) {
-          return code.replaceAll(
-            `from './client.js'`,
-            `from 'waku/router/client'`,
-          );
-        }
       },
     },
     {

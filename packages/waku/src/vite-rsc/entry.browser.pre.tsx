@@ -1,5 +1,5 @@
 import * as ReactClient from '@hiogawa/vite-rsc/browser';
-import { unstable_callServerRsc } from 'waku/minimal/client';
+import { unstable_callServerRsc } from '../minimal/client.js';
 ReactClient.setServerCallback(unstable_callServerRsc);
 
 if (import.meta.hot) {

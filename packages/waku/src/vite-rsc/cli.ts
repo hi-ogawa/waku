@@ -7,36 +7,22 @@ import process from 'node:process';
 
 const require = createRequire(import.meta.url);
 
-// based on
-// https://github.com/hi-ogawa/vite-plugins/blob/5970c2bab1aff4d40a04756198feaeecaa924ecf/packages/react-server-next/src/cli.ts#L33-L34
-
-function main() {
-  const argv = process.argv.slice(2);
-
-  if (argv[0] && !['dev', 'build', 'start'].includes(argv[0])) {
-    console.error(`[ERROR] unsupported command '${argv[0]}'`);
-    process.exit(1);
-  }
-
-  // next start -> vite preview
-  if (argv[0] === 'start') {
-    argv[0] = 'preview';
-  }
-
+export async function cli(options: { cmd: string; port: number }) {
   let configFile: string | undefined;
 
   if (fs.existsSync('waku-vite-rsc.config.ts')) {
+    // allow a dedicated config file for Vite RSC port
     configFile = 'waku-vite-rsc.config.ts';
   } else if (!fs.existsSync('vite.config.ts')) {
     // auto setup vite.config.ts in a hidden place
     const configCode = `\
-import waku from "waku-vite-rsc/plugin";
+import waku from "waku/vite-rsc/plugin";
 
 export default {
   plugins: [waku()],
 };
 `;
-    configFile = `node_modules/.cache/waku-vite-rsc/vite.config.${hashString(configCode)}.ts`;
+    configFile = `node_modules/.cache/waku/vite-vite-rsc.config.${hashString(configCode)}.ts`;
     if (!fs.existsSync(configFile)) {
       fs.mkdirSync(path.dirname(configFile), { recursive: true });
       fs.writeFileSync(configFile, configCode);
@@ -50,7 +36,14 @@ export default {
   );
   const proc = spawn(
     'node',
-    [viteBin, ...argv, ...(configFile ? ['-c', configFile] : [])],
+    [
+      viteBin,
+      options.cmd === 'start' ? 'preview' : options.cmd,
+      ...(options.cmd !== 'build' && options.port
+        ? ['--port', String(options.port)]
+        : []),
+      ...(configFile ? ['-c', configFile] : []),
+    ],
     {
       shell: false,
       stdio: 'inherit',
@@ -64,5 +57,3 @@ export default {
 function hashString(v: string) {
   return createHash('sha256').update(v).digest().toString('hex').slice(0, 10);
 }
-
-main();
