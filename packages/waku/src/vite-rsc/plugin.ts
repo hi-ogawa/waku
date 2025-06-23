@@ -10,6 +10,8 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
+// TODO: refactor and reuse common plugins from lib/plugins
+
 const PKG_NAME = 'waku';
 
 export default function wakuViteRscPlugin(wakuOptions?: {

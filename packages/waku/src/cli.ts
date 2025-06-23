@@ -85,8 +85,8 @@ if (values.version) {
   cmd &&
   ['dev', 'build', 'start'].includes(cmd)
 ) {
-  const { main } = await import('./vite-rsc/main.js');
-  await main({ cmd, port: parseInt(values.port || '3000', 10) });
+  const { cli } = await import('./vite-rsc/cli.js');
+  await cli({ cmd, port: parseInt(values.port || '3000', 10) });
 } else {
   switch (cmd) {
     case 'dev':

@@ -7,7 +7,7 @@ import process from 'node:process';
 
 const require = createRequire(import.meta.url);
 
-export async function main(options: { cmd: string; port: number }) {
+export async function cli(options: { cmd: string; port: number }) {
   let configFile: string | undefined;
 
   if (fs.existsSync('waku-vite-rsc.config.ts')) {
