@@ -5,6 +5,7 @@ import type { ReactFormState } from 'react-dom/client';
 import * as ReactDOMServer from 'react-dom/server.edge';
 import { INTERNAL_ServerRoot } from '../minimal/client.js';
 import type { RscElementsPayload, RscHtmlPayload } from './entry.rsc.js';
+import { fakeFetchCode } from '../lib/renderers/html.js';
 
 export async function renderHTML(
   rscStream: ReadableStream<Uint8Array>,
@@ -42,7 +43,7 @@ export async function renderHTML(
   const htmlStream = await ReactDOMServer.renderToReadableStream(<SsrRoot />, {
     bootstrapScriptContent: options?.debugNojs
       ? undefined
-      : getBootstrapPreamble({ rscPathForFakeFetch: options?.rscPath || '' }) +
+      : getBootstrapPreamble({ rscPath: options?.rscPath || '' }) +
         bootstrapScriptContent,
     nonce: options?.nonce,
     // no types
@@ -62,28 +63,11 @@ export async function renderHTML(
 }
 
 // cf. packages/waku/src/lib/renderers/html.ts `parseHtmlHead`
-function getBootstrapPreamble(options: { rscPathForFakeFetch: string }) {
+function getBootstrapPreamble(options: { rscPath: string }) {
   return `
     globalThis.__WAKU_HYDRATE__ = true;
     globalThis.__WAKU_PREFETCHED__ = {
-      ${JSON.stringify(options.rscPathForFakeFetch)}: ${FAKE_FETCH_CODE}
+      ${JSON.stringify(options.rscPath)}: ${fakeFetchCode}
     };
   `;
 }
-
-const FAKE_FETCH_CODE = `
-Promise.resolve(new Response(new ReadableStream({
-  start(c) {
-    const d = (self.__FLIGHT_DATA ||= []);
-    const t = new TextEncoder();
-    const f = (s) => c.enqueue(typeof s === 'string' ? t.encode(s) : s);
-    d.forEach(f);
-    d.push = f;
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => c.close());
-    } else {
-      c.close();
-    }
-  }
-})))
-`;

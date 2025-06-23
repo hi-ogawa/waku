@@ -71,6 +71,7 @@ export default function wakuViteRscPlugin(wakuOptions?: {
             noExternal: [PKG_NAME],
           },
           optimizeDeps: {
+            include: name === 'ssr' ? [`${PKG_NAME} > html-react-parser`] : [],
             exclude: [PKG_NAME, 'waku/minimal/client', 'waku/router/client'],
           },
           build: {
