@@ -250,13 +250,17 @@ export const prepareStandaloneSetup = (fixtureName: string) => {
         cwd: join(standaloneDir),
       });
     }
+    let waku = join(standaloneDir, './node_modules/waku/dist/cli.js');
+    if (process.env.TEST_VITE_RSC) {
+      waku = `${waku} --experimental-vite-rsc`;
+    }
     if (mode !== 'DEV' && !built) {
       rmSync(`${join(standaloneDir, packageDir, 'dist')}`, {
         recursive: true,
         force: true,
       });
       execSync(
-        `node ${join(standaloneDir, './node_modules/waku/dist/cli.js')} build`,
+        `node ${waku} build`,
         { cwd: join(standaloneDir, packageDir) },
       );
       built = true;
@@ -264,10 +268,10 @@ export const prepareStandaloneSetup = (fixtureName: string) => {
     let cmd: string;
     switch (mode) {
       case 'DEV':
-        cmd = `node ${join(standaloneDir, './node_modules/waku/dist/cli.js')} dev`;
+        cmd = `node ${waku} dev`;
         break;
       case 'PRD':
-        cmd = `node ${join(standaloneDir, './node_modules/waku/dist/cli.js')} start`;
+        cmd = `node ${waku} start`;
         break;
       case 'STATIC':
         cmd = `node ${join(standaloneDir, './node_modules/serve/build/main.js')} dist/public`;
