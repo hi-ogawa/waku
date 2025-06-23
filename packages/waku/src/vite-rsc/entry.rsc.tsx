@@ -170,13 +170,17 @@ export default async function handler(request: Request): Promise<Response> {
     });
   }
 
-  const ssrEntryModule = await import.meta.viteRsc.loadModule<
-    typeof import('./entry.ssr.tsx')
-  >('ssr', 'index');
-  const htmlFallbackStream = await ssrEntryModule.renderHtmlFallback();
-  return new Response(htmlFallbackStream, {
-    headers: {
-      'content-type': 'text/html;charset=utf-8',
-    },
-  });
+  if (url.pathname === '/') {
+    const ssrEntryModule = await import.meta.viteRsc.loadModule<
+      typeof import('./entry.ssr.tsx')
+    >('ssr', 'index');
+    const htmlFallbackStream = await ssrEntryModule.renderHtmlFallback();
+    return new Response(htmlFallbackStream, {
+      headers: {
+        'content-type': 'text/html;charset=utf-8',
+      },
+    });
+  }
+
+  return new Response('404 Not Found', { status: 404 });
 }
