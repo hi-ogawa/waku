@@ -137,9 +137,7 @@ export const prepareNormalSetup = (fixtureName: string) => {
     new URL('../packages/waku/dist/cli.js', import.meta.url),
   );
   if (process.env.TEST_VITE_RSC) {
-    waku = fileURLToPath(
-      new URL('../packages/waku-vite-rsc/dist/cli.js', import.meta.url),
-    );
+    waku = `${waku} --experimental-vite-rsc`;
   }
   const fixtureDir = fileURLToPath(
     new URL('./fixtures/' + fixtureName, import.meta.url),

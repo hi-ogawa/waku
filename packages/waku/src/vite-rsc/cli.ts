@@ -22,7 +22,7 @@ export default {
   plugins: [waku()],
 };
 `;
-    configFile = `node_modules/.cache/waku-vite-rsc/vite.config.${hashString(configCode)}.ts`;
+    configFile = `node_modules/.cache/waku/vite-vite-rsc.config.${hashString(configCode)}.ts`;
     if (!fs.existsSync(configFile)) {
       fs.mkdirSync(path.dirname(configFile), { recursive: true });
       fs.writeFileSync(configFile, configCode);

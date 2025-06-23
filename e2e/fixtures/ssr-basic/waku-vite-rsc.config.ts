@@ -1,4 +1,4 @@
-import waku from 'waku-vite-rsc/plugin';
+import waku from 'waku/vite-rsc/plugin';
 
 export default {
   plugins: [waku()],
