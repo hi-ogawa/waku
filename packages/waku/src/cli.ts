@@ -55,6 +55,9 @@ const { values, positionals } = parseArgs({
     'experimental-compress': {
       type: 'boolean',
     },
+    'experimental-vite-rsc': {
+      type: 'boolean',
+    },
     port: {
       type: 'string',
       short: 'p',
@@ -77,6 +80,13 @@ if (values.version) {
   console.log(version);
 } else if (values.help) {
   displayUsage();
+} else if (
+  values['experimental-vite-rsc'] &&
+  cmd &&
+  ['dev', 'build', 'start'].includes(cmd)
+) {
+  const { main } = await import('./vite-rsc/main.js');
+  await main({ cmd, port: parseInt(values.port || '3000', 10) });
 } else {
   switch (cmd) {
     case 'dev':
