@@ -178,6 +178,7 @@ jobs:
               /create-pages \
               /define-router \
               /fs-router \
+              /rsc-basic \
               /ssr-basic
         timeout-minutes: 15
         env:
