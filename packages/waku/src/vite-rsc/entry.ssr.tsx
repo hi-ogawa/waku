@@ -71,3 +71,17 @@ function getBootstrapPreamble(options: { rscPath: string }) {
     };
   `;
 }
+
+export async function renderHtmlFallback() {
+  const bootstrapScriptContent =
+    await import.meta.viteRsc.loadBootstrapScriptContent('index');
+  const fallback = (
+    <html>
+      <body></body>
+    </html>
+  );
+  const htmlStream = await ReactDOMServer.renderToReadableStream(fallback, {
+    bootstrapScriptContent,
+  } as any);
+  return htmlStream;
+}

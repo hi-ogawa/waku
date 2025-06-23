@@ -170,6 +170,13 @@ export default async function handler(request: Request): Promise<Response> {
     });
   }
 
-  // TODO: fallback middleware
-  return new Response('[vite-rsc] not found', { status: 404 });
+  const ssrEntryModule = await import.meta.viteRsc.loadModule<
+    typeof import('./entry.ssr.tsx')
+  >('ssr', 'index');
+  const htmlFallbackStream = await ssrEntryModule.renderHtmlFallback();
+  return new Response(htmlFallbackStream, {
+    headers: {
+      'content-type': 'text/html;charset=utf-8',
+    },
+  });
 }
