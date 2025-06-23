@@ -259,10 +259,7 @@ export const prepareStandaloneSetup = (fixtureName: string) => {
         recursive: true,
         force: true,
       });
-      execSync(
-        `node ${waku} build`,
-        { cwd: join(standaloneDir, packageDir) },
-      );
+      execSync(`node ${waku} build`, { cwd: join(standaloneDir, packageDir) });
       built = true;
     }
     let cmd: string;
