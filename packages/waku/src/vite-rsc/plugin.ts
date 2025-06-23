@@ -17,7 +17,9 @@ export default function wakuViteRscPlugin(wakuOptions?: {
 }): PluginOption {
   return [
     react(),
-    rsc(),
+    rsc({
+      ignoredClientInServerPackageWarning: [PKG_NAME],
+    }),
     {
       name: 'rsc:waku',
       config() {
@@ -76,29 +78,6 @@ export default function wakuViteRscPlugin(wakuOptions?: {
               (name !== 'client' ? 'esnext' : undefined),
           },
         };
-      },
-    },
-    {
-      // don't violate https://github.com/hi-ogawa/rsc-tests
-      name: 'rsc:waku:fix-internal-client-boundary',
-      transform(code, id) {
-        if (id.includes('/node_modules/waku/dist/router/create-pages.js')) {
-          return code
-            .replaceAll(
-              `from '../minimal/client.js'`,
-              `from 'waku/minimal/client'`,
-            )
-            .replaceAll(
-              `from '../router/client.js'`,
-              `from 'waku/router/client'`,
-            );
-        }
-        if (id.includes('/node_modules/waku/dist/router/define-router.js')) {
-          return code.replaceAll(
-            `from './client.js'`,
-            `from 'waku/router/client'`,
-          );
-        }
       },
     },
     {

@@ -1,6 +1,6 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import type React from 'react';
-import type { unstable_defineEntries } from 'waku/minimal/server';
+import type { unstable_defineEntries } from '../minimal/server.js';
 
 export type RscElementsPayload = Record<string, unknown>;
 // eslint-disable-next-line

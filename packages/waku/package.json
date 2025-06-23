@@ -87,7 +87,7 @@
     "node": "^24.0.0 || ^22.7.0 || ^20.8.0"
   },
   "dependencies": {
-    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@3a08bc9",
+    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@d3e6fa9",
     "@hono/node-server": "1.14.3",
     "@swc/core": "1.11.31",
     "@vitejs/plugin-react": "4.5.1",

@@ -3,7 +3,7 @@ import * as ReactClient from '@hiogawa/vite-rsc/ssr';
 import React from 'react';
 import type { ReactFormState } from 'react-dom/client';
 import * as ReactDOMServer from 'react-dom/server.edge';
-import { INTERNAL_ServerRoot } from 'waku/minimal/client';
+import { INTERNAL_ServerRoot } from '../minimal/client.js';
 import type { RscElementsPayload, RscHtmlPayload } from './entry.rsc.js';
 
 export async function renderHTML(
