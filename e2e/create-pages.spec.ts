@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 
-import { test, prepareStandaloneSetup, FETCH_ERROR_MESSAGES } from './utils.js';
+import { test, prepareStandaloneSetup, FETCH_ERROR_MESSAGES, waitForHydration } from './utils.js';
 
 const startApp = prepareStandaloneSetup('create-pages');
 
@@ -141,6 +141,7 @@ test.describe(`create-pages`, () => {
 
   test('server page unreachable', async ({ page, mode, browserName }) => {
     await page.goto(`http://localhost:${port}`);
+    await waitForHydration(page)
     await stopApp();
     await page.click("a[href='/error']");
     // Default router client error boundary is reached
