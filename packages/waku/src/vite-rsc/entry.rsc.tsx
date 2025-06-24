@@ -12,6 +12,7 @@ import { stringToStream } from '../lib/utils/stream.js';
 import { INTERNAL_setAllEnv } from '../server.js';
 import { joinPath } from '../lib/utils/path.js';
 import { runWithContext } from '../lib/middleware/context.js';
+import { getErrorInfo } from '../lib/utils/custom-errors.js';
 
 // TODO: refactor common logic from packages/waku/src/lib/middleware/handler.ts
 
@@ -36,10 +37,19 @@ function createImplementation({
   debugNojs?: boolean;
 }): HandleRequestImplementation {
   return {
-    // TODO: what `options` for?
-    async renderRsc(elements, _options) {
+    async renderRsc(elements) {
       return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
         temporaryReferences,
+        onError: (e: unknown) => {
+          if (
+            e &&
+            typeof e === 'object' &&
+            'digest' in e &&
+            typeof e.digest === 'string'
+          ) {
+            return e.digest;
+          }
+        },
       });
     },
     async renderHtml(
@@ -180,9 +190,14 @@ export default async function handler(request: Request): Promise<Response> {
       wakuServerEntry.handleRequest(wakuInput, implementation),
     );
   } catch (e) {
-    // TODO: more
-    res.status = 500;
-    res.body = stringToStream(e instanceof Error ? e.message : String(e));
+    const info = getErrorInfo(e);
+    res.status = info?.status || 500;
+    res.body = stringToStream(
+      (e as { message?: string } | undefined)?.message || String(e),
+    );
+    if (info?.location) {
+      (res.headers ||= {}).location = info.location;
+    }
   }
 
   if (wakuResult instanceof ReadableStream) {
