@@ -190,6 +190,7 @@ jobs:
               /ssr-basic \
               /ssr-context-provider \
               /ssr-swr \
+              /ssr-target-bundle \
         timeout-minutes: 15
         env:
           TEMP_DIR: ${{ runner.temp }}
