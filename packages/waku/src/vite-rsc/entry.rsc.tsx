@@ -2,10 +2,15 @@
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import type React from 'react';
 import type { unstable_defineEntries } from '../minimal/server.js';
-import { decodeFuncId, decodeRscPath } from '../lib/renderers/utils.js';
+import {
+  decodeFuncId,
+  decodeRscPath,
+  encodeRscPath,
+} from '../lib/renderers/utils.js';
 import type { HandlerReq, HandlerRes } from '../lib/types.js';
 import { stringToStream } from '../lib/utils/stream.js';
 import { INTERNAL_setAllEnv } from '../server.js';
+import { joinPath } from '../lib/utils/path.js';
 
 // TODO: refactor common logic from packages/waku/src/lib/middleware/handler.ts
 
@@ -224,7 +229,10 @@ export async function handleBuild() {
     renderHtml: implementation.renderHtml,
     rscPath2pathname: (rscPath) => {
       0 && console.log('[rscPath2pathname]', { rscPath });
-      return rscPath;
+      return joinPath(
+        import.meta.env.WAKU_CONFIG_RSC_BASE,
+        encodeRscPath(rscPath),
+      );
     },
     unstable_collectClientModules: async (elements) => {
       0 && console.log('[unstable_collectClientModules]', { elements });
