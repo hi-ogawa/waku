@@ -174,7 +174,7 @@ jobs:
       #   uses: ./.github/actions/playwright
       - run: |
           pnpm exec playwright test \
-            --project chromium-dev \
+            --project=chromium-dev \
               /create-pages \
               /define-router \
               /fs-router \
