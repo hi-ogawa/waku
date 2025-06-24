@@ -100,6 +100,7 @@ test.describe(`create-pages`, () => {
 
   test('errors', async ({ page }) => {
     await page.goto(`http://localhost:${port}`);
+    await waitForHydration(page);
     await page.click("a[href='/error']");
     await expect(
       page.getByRole('heading', { name: 'Error Page' }),
@@ -118,6 +119,7 @@ test.describe(`create-pages`, () => {
 
   test('server function unreachable', async ({ page, mode, browserName }) => {
     await page.goto(`http://localhost:${port}`);
+    await waitForHydration(page)
     await page.click("a[href='/error']");
     await expect(
       page.getByRole('heading', { name: 'Error Page' }),

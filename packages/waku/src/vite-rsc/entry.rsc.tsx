@@ -11,6 +11,7 @@ import type { HandlerReq, HandlerRes } from '../lib/types.js';
 import { stringToStream } from '../lib/utils/stream.js';
 import { INTERNAL_setAllEnv } from '../server.js';
 import { joinPath } from '../lib/utils/path.js';
+import { runWithContext } from '../lib/middleware/context.js';
 
 // TODO: refactor common logic from packages/waku/src/lib/middleware/handler.ts
 
@@ -175,7 +176,9 @@ export default async function handler(request: Request): Promise<Response> {
   let wakuResult: HandleRequestOutput;
   const res: HandlerRes = {};
   try {
-    wakuResult = await wakuServerEntry.handleRequest(wakuInput, implementation);
+    wakuResult = await runWithContext({ req, data: {} }, () =>
+      wakuServerEntry.handleRequest(wakuInput, implementation),
+    );
   } catch (e) {
     // TODO: more
     res.status = 500;
