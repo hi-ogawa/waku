@@ -189,6 +189,7 @@ jobs:
               /ssg-wildcard \
               /ssr-basic \
               /ssr-context-provider \
+              /ssr-swr \
         timeout-minutes: 15
         env:
           TEMP_DIR: ${{ runner.temp }}
