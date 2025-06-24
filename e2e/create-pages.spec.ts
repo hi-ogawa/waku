@@ -1,6 +1,11 @@
 import { expect } from '@playwright/test';
 
-import { test, prepareStandaloneSetup, FETCH_ERROR_MESSAGES, waitForHydration } from './utils.js';
+import {
+  test,
+  prepareStandaloneSetup,
+  FETCH_ERROR_MESSAGES,
+  waitForHydration,
+} from './utils.js';
 
 const startApp = prepareStandaloneSetup('create-pages');
 
@@ -67,6 +72,7 @@ test.describe(`create-pages`, () => {
   });
 
   test("nested/cat's pajamas", async ({ page }) => {
+    test.skip(!!process.env.TEST_VITE_RSC);
     await page.goto(`http://localhost:${port}/nested/cat's%20pajamas`);
     await expect(
       page.getByRole('heading', { name: "Dynamic: cat's pajamas" }),
@@ -121,7 +127,7 @@ test.describe(`create-pages`, () => {
 
   test('server function unreachable', async ({ page, mode, browserName }) => {
     await page.goto(`http://localhost:${port}`);
-    await waitForHydration(page)
+    await waitForHydration(page);
     await page.click("a[href='/error']");
     await expect(
       page.getByRole('heading', { name: 'Error Page' }),
@@ -145,7 +151,7 @@ test.describe(`create-pages`, () => {
 
   test('server page unreachable', async ({ page, mode, browserName }) => {
     await page.goto(`http://localhost:${port}`);
-    await waitForHydration(page)
+    await waitForHydration(page);
     await stopApp();
     await page.click("a[href='/error']");
     // Default router client error boundary is reached
