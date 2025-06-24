@@ -15,6 +15,10 @@ import fs from 'node:fs';
 import type { Config } from '../config.js';
 import { unstable_getBuildOptions } from '../server.js';
 import { emitStaticFile, waitForTasks } from '../lib/builder/build.js';
+import {
+  getManagedEntries,
+  getManagedMain,
+} from '../lib/plugins/vite-plugin-rsc-managed.js';
 
 // TODO: refactor and reuse common plugins from lib/plugins
 
@@ -308,39 +312,6 @@ export default function wakuViteRscPlugin(wakuOptions?: {
     },
   ];
 }
-
-// cf. packages/waku/src/lib/plugins/vite-plugin-rsc-managed.ts
-const EXTENSIONS = ['.js', '.ts', '.tsx', '.jsx', '.mjs', '.cjs'];
-
-const getManagedEntries = (
-  filePath: string,
-  srcDir: string,
-  options: { pagesDir: string; apiDir: string },
-) => `
-import { unstable_fsRouter as fsRouter } from 'waku/router/server';
-
-export default fsRouter(
-  '${pathToFileURL(filePath)}',
-  (file) => import.meta.glob('/${srcDir}/pages/**/*.{${EXTENSIONS.map((ext) =>
-    ext.replace(/^\./, ''),
-  ).join(',')}}')[\`/${srcDir}/pages/\${file}\`]?.(),
-  { pagesDir: '${options.pagesDir}', apiDir: '${options.apiDir}' },
-);
-`;
-
-const getManagedMain = () => `
-import { StrictMode, createElement } from 'react';
-import { createRoot, hydrateRoot } from 'react-dom/client';
-import { Router } from 'waku/router/client';
-
-const rootElement = createElement(StrictMode, null, createElement(Router));
-
-if (globalThis.__WAKU_HYDRATE__) {
-  hydrateRoot(document, rootElement);
-} else {
-  createRoot(document).render(rootElement);
-}
-`;
 
 function normalizeRelativePath(s: string) {
   s = normalizePath(s);
