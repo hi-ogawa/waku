@@ -36,20 +36,22 @@ function createImplementation({
   temporaryReferences?: unknown;
   debugNojs?: boolean;
 }): HandleRequestImplementation {
+  const onError = (e: unknown) => {
+    if (
+      e &&
+      typeof e === 'object' &&
+      'digest' in e &&
+      typeof e.digest === 'string'
+    ) {
+      return e.digest;
+    }
+  };
+
   return {
     async renderRsc(elements) {
       return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
         temporaryReferences,
-        onError: (e: unknown) => {
-          if (
-            e &&
-            typeof e === 'object' &&
-            'digest' in e &&
-            typeof e.digest === 'string'
-          ) {
-            return e.digest;
-          }
-        },
+        onError,
       });
     },
     async renderHtml(
@@ -62,10 +64,14 @@ function createImplementation({
       >('ssr', 'index');
 
       const rscElementsStream =
-        ReactServer.renderToReadableStream<RscElementsPayload>(elements);
+        ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
+          onError,
+        });
 
-      const rscHtmlStream =
-        ReactServer.renderToReadableStream<RscHtmlPayload>(html);
+      const rscHtmlStream = ReactServer.renderToReadableStream<RscHtmlPayload>(
+        html,
+        { onError },
+      );
 
       const htmlStream = await ssrEntryModule.renderHTML(
         rscElementsStream,

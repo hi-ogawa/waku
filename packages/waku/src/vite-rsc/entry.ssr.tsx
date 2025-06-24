@@ -46,6 +46,16 @@ export async function renderHTML(
       : getBootstrapPreamble({ rscPath: options?.rscPath || '' }) +
         bootstrapScriptContent,
     nonce: options?.nonce,
+    onError: (e: unknown) => {
+      if (
+        e &&
+        typeof e === 'object' &&
+        'digest' in e &&
+        typeof e.digest === 'string'
+      ) {
+        return e.digest;
+      }
+    },
     // no types
     ...{ formState: options?.formState },
   } as any);
