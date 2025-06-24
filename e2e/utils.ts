@@ -284,3 +284,17 @@ export const prepareStandaloneSetup = (fixtureName: string) => {
   };
   return startApp;
 };
+
+export async function waitForHydration(page: Page) {
+  await page.waitForFunction(
+    () => {
+      const el = document.querySelector("body");
+      if (el) {
+        const keys = Object.keys(el);
+        return keys.some((key) => key.startsWith("__reactFiber"));
+      }
+    },
+    null,
+    { timeout: 3000 },
+  );
+}
