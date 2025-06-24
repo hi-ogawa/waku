@@ -179,6 +179,7 @@ jobs:
               /create-pages \
               /define-router \
               /partial-build \
+              /render-type \
               /fs-router \
               /rsc-asset \
               /rsc-basic \
