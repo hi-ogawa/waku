@@ -7,7 +7,7 @@ import process from 'node:process';
 
 const require = createRequire(import.meta.url);
 
-export async function cli(options: { cmd: string; port: number }) {
+export async function cli(options: { cmd: string; port: string | undefined }) {
   let configFile: string | undefined;
 
   if (fs.existsSync('waku-vite-rsc.config.ts')) {
@@ -39,9 +39,8 @@ export default {
     [
       viteBin,
       options.cmd === 'start' ? 'preview' : options.cmd,
-      ...(options.cmd !== 'build' && options.port
-        ? ['--port', String(options.port)]
-        : []),
+      ...(options.cmd == 'dev' ? ['--port', options.port || '3000'] : []),
+      ...(options.cmd == 'start' ? ['--port', options.port || '8080'] : []),
       ...(configFile ? ['-c', configFile] : []),
     ],
     {
