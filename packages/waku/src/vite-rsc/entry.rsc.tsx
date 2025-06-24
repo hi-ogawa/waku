@@ -1,3 +1,4 @@
+/* eslint-disable */
 import * as ReactServer from '@hiogawa/vite-rsc/rsc';
 import type React from 'react';
 import type { unstable_defineEntries } from '../minimal/server.js';
@@ -8,7 +9,6 @@ import { stringToStream } from '../lib/utils/stream.js';
 // TODO: refactor common logic from packages/waku/src/lib/middleware/handler.ts
 
 export type RscElementsPayload = Record<string, unknown>;
-// eslint-disable-next-line
 export type RscHtmlPayload = React.ReactNode;
 
 type WakuServerEntry = ReturnType<typeof unstable_defineEntries>;
@@ -69,10 +69,8 @@ function createImplementation({
 
 // cf. packages/waku/src/lib/middleware/handler.ts `handler`
 export default async function handler(request: Request): Promise<Response> {
-  // eslint-disable-next-line
   await import('virtual:vite-rsc-waku/set-platform-data');
 
-  // eslint-disable-next-line
   const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
     .default;
 
@@ -213,7 +211,6 @@ export default async function handler(request: Request): Promise<Response> {
 }
 
 export async function handleBuild() {
-  // eslint-disable-next-line
   const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
     .default;
 
