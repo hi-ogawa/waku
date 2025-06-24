@@ -86,6 +86,9 @@ if (values.version) {
   ['dev', 'build', 'start'].includes(cmd)
 ) {
   const { cli } = await import('./vite-rsc/cli.js');
+  if (values['experimental-partial']) {
+    process.env.WAKU_VITE_RSC_EXPERIMENTAL_PARTIAL = 'true';
+  }
   await cli({ cmd, port: values.port });
 } else {
   switch (cmd) {

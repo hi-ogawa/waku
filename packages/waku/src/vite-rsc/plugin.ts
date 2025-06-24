@@ -120,6 +120,14 @@ export default function wakuViteRscPlugin(wakuOptions?: {
           );
         }
 
+        if (name === 'client') {
+          config.build ??= {};
+          config.build.outDir = 'dist/public';
+          if (process.env.WAKU_VITE_RSC_EXPERIMENTAL_PARTIAL) {
+            config.build.emptyOutDir = false;
+          }
+        }
+
         return {
           resolve: {
             noExternal: [PKG_NAME],
@@ -137,16 +145,17 @@ export default function wakuViteRscPlugin(wakuOptions?: {
         };
       },
       async configurePreviewServer(server) {
-        // serve ssg
+        // server ssg html
         // TODO: integrate hono
-        const sirv = await import('sirv');
-        server.middlewares.use(
-          sirv.default('dist/public', {
-            etag: true,
-            dev: true,
-            ignores: false,
-          }),
-        );
+        const outDir = server.config.environments.client!.build.outDir;
+        server.middlewares.use((req, _res, next) => {
+          const url = new URL(req.url!, 'https://test.local');
+          const htmlFile = url.pathname + '/index.html';
+          if (fs.existsSync(path.join(outDir, htmlFile))) {
+            req.url = htmlFile;
+          }
+          next();
+        });
       },
     },
     {
