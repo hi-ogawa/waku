@@ -182,6 +182,7 @@ jobs:
               /partial-build \
               /render-type \
               /fs-router \
+              /monorepo \
               /rsc-asset \
               /rsc-basic \
               /rsc-css-modules \
