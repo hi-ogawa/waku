@@ -3,6 +3,7 @@ import type React from 'react';
 import type { unstable_defineEntries } from '../minimal/server.js';
 import { decodeFuncId, decodeRscPath } from '../lib/renderers/utils.js';
 import type { HandlerReq, HandlerRes } from '../lib/types.js';
+import { stringToStream } from '../lib/utils/stream.js';
 
 // TODO: refactor common logic from packages/waku/src/lib/middleware/handler.ts
 
@@ -12,6 +13,9 @@ export type RscHtmlPayload = React.ReactNode;
 
 type WakuServerEntry = ReturnType<typeof unstable_defineEntries>;
 type HandleRequestInput = Parameters<WakuServerEntry['handleRequest']>[0];
+type HandleRequestOutput = Awaited<
+  ReturnType<WakuServerEntry['handleRequest']>
+>;
 type HandleRequestImplementation = Parameters<
   WakuServerEntry['handleRequest']
 >[1];
@@ -65,7 +69,7 @@ export default async function handler(request: Request): Promise<Response> {
       // client RSC request
       let rscParams: unknown;
       if (request.method === 'POST' && request.body) {
-        // refetch with params?
+        // TODO: refetch with params?
         rscParams = await request.json();
       }
       wakuInput = {
@@ -149,12 +153,16 @@ export default async function handler(request: Request): Promise<Response> {
     },
   };
 
-  const wakuResult = await wakuServerEntry.handleRequest(
-    wakuInput,
-    implementation,
-  );
-
+  let wakuResult: HandleRequestOutput;
   const res: HandlerRes = {};
+  try {
+    wakuResult = await wakuServerEntry.handleRequest(wakuInput, implementation);
+  } catch (e) {
+    // TODO: more
+    res.status = 500;
+    res.body = stringToStream(e instanceof Error ? e.message : String(e));
+  }
+
   if (wakuResult instanceof ReadableStream) {
     res.body = wakuResult;
   } else if (wakuResult) {
