@@ -63,10 +63,15 @@ export default async function handler(request: Request): Promise<Response> {
       };
     } else {
       // client RSC request
+      let rscParams: unknown;
+      if (request.method === 'POST' && request.body) {
+        // refetch with params?
+        rscParams = await request.json();
+      }
       wakuInput = {
         type: 'component',
         rscPath,
-        rscParams: url.searchParams,
+        rscParams: rscParams ?? url.searchParams,
         req,
       };
     }
