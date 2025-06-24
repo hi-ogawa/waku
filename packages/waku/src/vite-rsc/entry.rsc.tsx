@@ -105,6 +105,22 @@ export default async function handler(request: Request): Promise<Response> {
     method: request.method,
     headers: Object.fromEntries(request.headers.entries()),
   };
+  const res: HandlerRes = {};
+
+  const middlewares = (await import('virtual:vite-rsc-waku/middlewares'))
+    .default;
+  for (const middleware of middlewares) {
+    let next = false;
+    await middleware({ req, res, data: {} }, async () => {
+      next = true;
+    });
+    if (!next) {
+      return new Response(res.body, {
+        status: res.status ?? 400,
+        headers: res.headers as any,
+      });
+    }
+  }
 
   // cf. packages/waku/src/lib/middleware/handler.ts `getInput`
   const rscPathPrefix =
@@ -190,7 +206,6 @@ export default async function handler(request: Request): Promise<Response> {
   });
 
   let wakuResult: HandleRequestOutput;
-  const res: HandlerRes = {};
   try {
     wakuResult = await runWithContext({ req, data: {} }, () =>
       wakuServerEntry.handleRequest(wakuInput, implementation),

@@ -1,13 +1,8 @@
 import { expect } from '@playwright/test';
 
-import {
-  test,
-  // prepareStandaloneSetup,
-  prepareNormalSetup,
-} from './utils.js';
+import { test, prepareStandaloneSetup } from './utils.js';
 
-// const startApp = prepareStandaloneSetup('broken-links');
-const startApp = prepareNormalSetup('broken-links');
+const startApp = prepareStandaloneSetup('broken-links');
 
 test.describe(`broken-links: normal server`, async () => {
   let port: number;

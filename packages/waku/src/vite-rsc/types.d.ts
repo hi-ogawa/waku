@@ -14,3 +14,9 @@ declare module 'react-dom/server.edge' {
 }
 
 declare module 'virtual:vite-rsc-waku/set-platform-data' {}
+
+declare module 'virtual:vite-rsc-waku/middlewares' {
+  import type { Middleware } from 'waku/config';
+  const default_: ReturnType<Middleware>[];
+  export default default_;
+}

@@ -200,6 +200,31 @@ export default function wakuViteRscPlugin(wakuOptions?: {
       },
     },
     {
+      name: 'rsc:waku:middleware',
+      resolveId(source) {
+        if (source === 'virtual:vite-rsc-waku/middlewares') {
+          return '\0' + source;
+        }
+      },
+      load(id) {
+        if (id === '\0virtual:vite-rsc-waku/middlewares') {
+          // TODO: for now a toy middleware implementation
+          // to cover the use cases in e2e/broken-links and ssr-catch-error
+          const files = (wakuConfig?.middleware ?? [])
+            .filter((file) => !file.startsWith('waku/'))
+            .map((file) => path.resolve(file));
+          let code = '';
+          files.forEach((file, i) => {
+            code += `import __m_${i} from ${JSON.stringify(file)};\n`;
+          });
+          code += `export default [`;
+          code += files.map((_, i) => `__m_${i}()`).join(',\n');
+          code += `];\n`;
+          return code;
+        }
+      },
+    },
+    {
       // rewrite `react-server-dom-webpack` in `waku/minimal/client`
       name: 'rsc:waku:patch-webpack',
       enforce: 'pre',

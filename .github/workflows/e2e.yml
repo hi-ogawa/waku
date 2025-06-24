@@ -177,6 +177,7 @@ jobs:
             --shard=${{ matrix.shared }}/${{ matrix.shardTotal }} \
             --project=chromium-dev \
             --project=chromium-prd \
+              /broken-links \
               /create-pages \
               /define-router \
               /partial-build \
