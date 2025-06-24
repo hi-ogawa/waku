@@ -178,6 +178,7 @@ jobs:
             --project=chromium-prd \
               /create-pages \
               /define-router \
+              /partial-build \
               /fs-router \
               /rsc-asset \
               /rsc-basic \
