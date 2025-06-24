@@ -1,7 +1,10 @@
 import {
+  mergeConfig,
   normalizePath,
+  runnerImport,
   type EnvironmentOptions,
   type PluginOption,
+  type UserConfig,
 } from 'vite';
 import react from '@vitejs/plugin-react';
 import rsc from '@hiogawa/vite-rsc/plugin';
@@ -9,6 +12,7 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import type { Config } from '../config.js';
 
 // TODO: refactor and reuse common plugins from lib/plugins
 
@@ -17,6 +21,8 @@ const PKG_NAME = 'waku';
 export default function wakuViteRscPlugin(wakuOptions?: {
   serverHmr?: boolean | 'reload';
 }): PluginOption {
+  let wakuConfig: Config | undefined;
+
   return [
     react(),
     rsc({
@@ -24,7 +30,27 @@ export default function wakuViteRscPlugin(wakuOptions?: {
     }),
     {
       name: 'rsc:waku',
-      config() {
+      async config(_config, env) {
+        if (!env.isPreview) {
+          try {
+            const imported = await runnerImport<{ default: Config }>(
+              '/waku.config',
+            );
+            wakuConfig = imported.module.default;
+          } catch (e) {
+            // ignore errors when waku.config doesn't exist
+            if (
+              !(
+                e instanceof Error &&
+                e.message ===
+                  'Failed to load url /waku.config (resolved id: /waku.config). Does the file exist?'
+              )
+            ) {
+              console.error(e);
+            }
+          }
+        }
+
         const toEnvironmentOption = (entry: string) =>
           ({
             build: {
@@ -36,7 +62,7 @@ export default function wakuViteRscPlugin(wakuOptions?: {
             },
           }) satisfies EnvironmentOptions;
 
-        return {
+        let viteRscConfig: UserConfig = {
           define: {
             'import.meta.env.WAKU_CONFIG_BASE_PATH': JSON.stringify('/'),
             'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify('RSC'),
@@ -51,6 +77,24 @@ export default function wakuViteRscPlugin(wakuOptions?: {
             rsc: toEnvironmentOption('entry.rsc'),
           },
         };
+
+        // TODO: adding `plugins` here is not supported.
+        viteRscConfig = mergeConfig(
+          viteRscConfig,
+          wakuConfig?.unstable_viteConfigs?.['common']?.() ?? {},
+        );
+        if (env.command === 'serve') {
+          viteRscConfig = mergeConfig(
+            viteRscConfig,
+            wakuConfig?.unstable_viteConfigs?.['dev-main']?.() ?? {},
+          );
+        } else {
+          viteRscConfig = mergeConfig(
+            viteRscConfig,
+            wakuConfig?.unstable_viteConfigs?.['build-server']?.() ?? {},
+          );
+        }
+        return viteRscConfig;
       },
       configEnvironment(name, config, _env) {
         // make @hiogawa/vite-rsc usable as a transitive dependency
