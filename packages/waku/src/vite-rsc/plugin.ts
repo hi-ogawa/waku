@@ -136,6 +136,18 @@ export default function wakuViteRscPlugin(wakuOptions?: {
           },
         };
       },
+      async configurePreviewServer(server) {
+        // serve ssg
+        // TODO: integrate hono
+        const sirv = await import('sirv');
+        server.middlewares.use(
+          sirv.default('dist/public', {
+            etag: true,
+            dev: true,
+            ignores: false,
+          }),
+        );
+      },
     },
     {
       name: 'rsc:waku:user-entries',
