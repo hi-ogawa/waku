@@ -20,7 +20,7 @@ export default function wakuViteRscPlugin(wakuOptions?: {
   return [
     react(),
     rsc({
-      ignoredClientInServerPackageWarning: [PKG_NAME],
+      ignoredPackageWarnings: [PKG_NAME],
     }),
     {
       name: 'rsc:waku',
