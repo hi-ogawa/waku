@@ -5,6 +5,7 @@ import type { unstable_defineEntries } from '../minimal/server.js';
 import { decodeFuncId, decodeRscPath } from '../lib/renderers/utils.js';
 import type { HandlerReq, HandlerRes } from '../lib/types.js';
 import { stringToStream } from '../lib/utils/stream.js';
+import { INTERNAL_setAllEnv } from '../server.js';
 
 // TODO: refactor common logic from packages/waku/src/lib/middleware/handler.ts
 
@@ -71,6 +72,7 @@ function createImplementation({
 export default async function handler(request: Request): Promise<Response> {
   await import('virtual:vite-rsc-waku/set-platform-data');
 
+  INTERNAL_setAllEnv(process.env as any);
   const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
     .default;
 
@@ -211,6 +213,7 @@ export default async function handler(request: Request): Promise<Response> {
 }
 
 export async function handleBuild() {
+  INTERNAL_setAllEnv(process.env as any);
   const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
     .default;
 
