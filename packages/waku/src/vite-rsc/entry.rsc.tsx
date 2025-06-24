@@ -216,7 +216,7 @@ export async function handleBuild() {
 
   const implementation = createImplementation({});
 
-  const buildConfig = wakuServerEntry.handleBuild({
+  const buidlResult = wakuServerEntry.handleBuild({
     renderRsc: implementation.renderRsc,
     renderHtml: implementation.renderHtml,
     rscPath2pathname: (rscPath) => {
@@ -234,9 +234,5 @@ export async function handleBuild() {
     },
   });
 
-  if (buildConfig) {
-    for await (const buildTask of buildConfig) {
-      0 && console.log('[buildTask]', buildTask);
-    }
-  }
+  return buidlResult;
 }

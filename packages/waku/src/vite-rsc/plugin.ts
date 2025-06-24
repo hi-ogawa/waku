@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { Config } from '../config.js';
 import { unstable_getBuildOptions } from '../server.js';
+import { emitStaticFile, waitForTasks } from '../lib/builder/build.js';
 
 // TODO: refactor and reuse common plugins from lib/plugins
 
@@ -260,6 +261,7 @@ export default function wakuViteRscPlugin(wakuOptions?: {
           );
         }
       },
+      // cf. packages/waku/src/lib/builder/build.ts
       writeBundle: {
         order: 'post',
         async handler(_options, _bundle) {
@@ -279,7 +281,20 @@ export default function wakuViteRscPlugin(wakuOptions?: {
 
           // run `handleBuild`
           unstable_getBuildOptions().unstable_phase = 'emitStaticFiles';
-          await entry.handleBuild();
+          const buildConfigs = await entry.handleBuild();
+          for await (const buildConfig of buildConfigs || []) {
+            if (buildConfig.type === 'file') {
+              emitStaticFile(
+                config.root,
+                { distDir: 'dist' },
+                buildConfig.pathname,
+                buildConfig.body,
+              );
+            } else {
+              console.warn('[waku:vite-rsc] ignored build task:', buildConfig);
+            }
+          }
+          await waitForTasks();
 
           // save platform data
           const platformDataCode = `globalThis.__WAKU_SERVER_PLATFORM_DATA__ = ${JSON.stringify((globalThis as any).__WAKU_SERVER_PLATFORM_DATA__ ?? {}, null, 2)}\n`;
