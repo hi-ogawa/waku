@@ -184,6 +184,8 @@ jobs:
               /rsc-asset \
               /rsc-basic \
               /rsc-css-modules \
+              /ssg-performance \
+              /ssg-wildcard \
               /ssr-basic \
               /ssr-context-provider \
         timeout-minutes: 15
