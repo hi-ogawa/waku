@@ -13,6 +13,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { Config } from '../config.js';
+import { unstable_getBuildOptions } from '../server.js';
 
 // TODO: refactor and reuse common plugins from lib/plugins
 
@@ -228,10 +229,7 @@ export default function wakuViteRscPlugin(wakuOptions?: {
       },
     },
     {
-      // expose `__WAKU_SERVER_PLATFORM_DATA__.fsRouterFiles` for build.
-      // for now we manually crawl `src/pages/` to collect all files.
-      // TODO: support `handleBuild` API.
-      name: 'rsc:waku:set-platform-data',
+      name: 'rsc:waku:handle-build',
       resolveId(source) {
         if (source === 'virtual:vite-rsc-waku/set-platform-data') {
           assert.equal(this.environment.name, 'rsc');
@@ -268,19 +266,28 @@ export default function wakuViteRscPlugin(wakuOptions?: {
           if (this.environment.name !== 'ssr') {
             return;
           }
-          const { glob } = await import('tinyglobby');
-          const fsRouterFiles = await glob(`**/*.{ts,tsx,js,jsx,mjs,cjs}`, {
-            cwd: `src/pages/`,
-          });
-          const setPlatformDataCode = `\
-            globalThis.__WAKU_SERVER_PLATFORM_DATA__ ??= {};
-            __WAKU_SERVER_PLATFORM_DATA__.fsRouterFiles = [${JSON.stringify(fsRouterFiles)}];
-          `;
-          const setPlatformDataFile = path.join(
+
+          // import server entry
+          const config = this.environment.getTopLevelConfig();
+          const entryPath = path.join(
+            config.environments.rsc!.build.outDir,
+            'index.js',
+          );
+          const entry: typeof import('./entry.rsc.js') = await import(
+            pathToFileURL(entryPath).href
+          );
+
+          // run `handleBuild`
+          unstable_getBuildOptions().unstable_phase = 'emitStaticFiles';
+          await entry.handleBuild();
+
+          // save platform data
+          const platformDataCode = `globalThis.__WAKU_SERVER_PLATFORM_DATA__ = ${JSON.stringify((globalThis as any).__WAKU_SERVER_PLATFORM_DATA__ ?? {}, null, 2)}\n`;
+          const platformDataFile = path.join(
             this.environment.getTopLevelConfig().environments.rsc!.build.outDir,
             '__waku_set_platform_data.js',
           );
-          fs.writeFileSync(setPlatformDataFile, setPlatformDataCode);
+          fs.writeFileSync(platformDataFile, platformDataCode);
         },
       },
     },

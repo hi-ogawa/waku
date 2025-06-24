@@ -20,6 +20,53 @@ type HandleRequestImplementation = Parameters<
   WakuServerEntry['handleRequest']
 >[1];
 
+// core RSC/HTML rendering implementation
+function createImplementation({
+  temporaryReferences,
+  debugNojs,
+}: {
+  temporaryReferences?: unknown;
+  debugNojs?: boolean;
+}): HandleRequestImplementation {
+  return {
+    // TODO: what `options` for?
+    async renderRsc(elements, _options) {
+      return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
+        temporaryReferences,
+      });
+    },
+    async renderHtml(
+      elements,
+      html,
+      options?: { rscPath?: string; actionResult?: any },
+    ) {
+      const ssrEntryModule = await import.meta.viteRsc.loadModule<
+        typeof import('./entry.ssr.tsx')
+      >('ssr', 'index');
+
+      const rscElementsStream =
+        ReactServer.renderToReadableStream<RscElementsPayload>(elements);
+
+      const rscHtmlStream =
+        ReactServer.renderToReadableStream<RscHtmlPayload>(html);
+
+      const htmlStream = await ssrEntryModule.renderHTML(
+        rscElementsStream,
+        rscHtmlStream,
+        {
+          debugNojs,
+          formState: options?.actionResult,
+          rscPath: options?.rscPath,
+        },
+      );
+      return {
+        body: htmlStream as any,
+        headers: { 'content-type': 'text/html' },
+      };
+    },
+  };
+}
+
 // cf. packages/waku/src/lib/middleware/handler.ts `handler`
 export default async function handler(request: Request): Promise<Response> {
   // eslint-disable-next-line
@@ -115,43 +162,10 @@ export default async function handler(request: Request): Promise<Response> {
     };
   }
 
-  const implementation: HandleRequestImplementation = {
-    // TODO: what `options` for?
-    async renderRsc(elements, _options) {
-      return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
-        temporaryReferences,
-      });
-    },
-    async renderHtml(
-      elements,
-      html,
-      options?: { rscPath?: string; actionResult?: any },
-    ) {
-      const ssrEntryModule = await import.meta.viteRsc.loadModule<
-        typeof import('./entry.ssr.tsx')
-      >('ssr', 'index');
-
-      const rscElementsStream =
-        ReactServer.renderToReadableStream<RscElementsPayload>(elements);
-
-      const rscHtmlStream =
-        ReactServer.renderToReadableStream<RscHtmlPayload>(html);
-
-      const htmlStream = await ssrEntryModule.renderHTML(
-        rscElementsStream,
-        rscHtmlStream,
-        {
-          debugNojs: url.searchParams.has('__nojs'),
-          formState: options?.actionResult,
-          rscPath: options?.rscPath,
-        },
-      );
-      return {
-        body: htmlStream as any,
-        headers: { 'content-type': 'text/html' },
-      };
-    },
-  };
+  const implementation = createImplementation({
+    temporaryReferences,
+    debugNojs: url.searchParams.has('__nojs'),
+  });
 
   let wakuResult: HandleRequestOutput;
   const res: HandlerRes = {};
@@ -196,4 +210,36 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   return new Response('404 Not Found', { status: 404 });
+}
+
+export async function handleBuild() {
+  // eslint-disable-next-line
+  const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
+    .default;
+
+  const implementation = createImplementation({});
+
+  const buildConfig = wakuServerEntry.handleBuild({
+    renderRsc: implementation.renderRsc,
+    renderHtml: implementation.renderHtml,
+    rscPath2pathname: (rscPath) => {
+      0 && console.log('[rscPath2pathname]', { rscPath });
+      return rscPath;
+    },
+    unstable_collectClientModules: async (elements) => {
+      0 && console.log('[unstable_collectClientModules]', { elements });
+      return [];
+    },
+    unstable_generatePrefetchCode: (rscPaths, moduleIds) => {
+      0 &&
+        console.log('[unstable_generatePrefetchCode]', { rscPaths, moduleIds });
+      return '';
+    },
+  });
+
+  if (buildConfig) {
+    for await (const buildTask of buildConfig) {
+      0 && console.log('[buildTask]', buildTask);
+    }
+  }
 }
