@@ -4,7 +4,7 @@ import { test, prepareNormalSetup, waitForHydration } from './utils.js';
 
 const startApp = prepareNormalSetup('ssr-redirect');
 
-test.describe(`ssr-redirect`, () => {
+test.describe.serial(`ssr-redirect`, () => {
   let port: number;
   let stopApp: () => Promise<void>;
   test.beforeAll(async ({ mode }) => {
