@@ -36,7 +36,10 @@ export default function wakuViteRscPlugin(wakuOptions?: {
       // by default, it copies only ".css" for security reasons.
       // this should expanded or exposed based on Waku's opinion.
       copyServerAssetsToClient: (fileName) =>
-        fileName.endsWith('.txt') || fileName.endsWith('.css'),
+        fileName.endsWith('.css') ||
+        fileName.endsWith('.txt') ||
+        fileName.endsWith('.jpg') ||
+        fileName.endsWith('.json'),
     }),
     {
       name: 'rsc:waku',
