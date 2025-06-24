@@ -1,8 +1,13 @@
 import { expect } from '@playwright/test';
 
-import { test, prepareStandaloneSetup } from './utils.js';
+import {
+  test,
+  // prepareStandaloneSetup,
+  prepareNormalSetup,
+} from './utils.js';
 
-const startApp = prepareStandaloneSetup('broken-links');
+// const startApp = prepareStandaloneSetup('broken-links');
+const startApp = prepareNormalSetup('broken-links');
 
 test.describe(`broken-links: normal server`, async () => {
   let port: number;
@@ -68,6 +73,8 @@ test.describe(`broken-links: normal server`, async () => {
 });
 
 test.describe('broken-links: static server', () => {
+  test.skip(({ mode }) => mode !== 'PRD');
+
   let port: number;
   let stopApp: () => Promise<void>;
   test.beforeAll(async () => {
@@ -137,11 +144,12 @@ test.describe('broken-links: static server', () => {
   });
 });
 
-for (const mode of ['DEV', 'PRD'] as const) {
+// for (const mode of ['DEV', 'PRD'] as const) {
+for (const mode of ['?'] as const) {
   test.describe(`broken-links/dynamic-not-found: ${mode}`, async () => {
     let port: number;
     let stopApp: () => Promise<void>;
-    test.beforeAll(async () => {
+    test.beforeAll(async ({ mode }) => {
       ({ port, stopApp } = await startApp(mode));
     });
     test.afterAll(async () => {
