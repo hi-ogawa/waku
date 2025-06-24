@@ -12,7 +12,7 @@ export default defineConfig({
 });
 
 // emit asset and rewrite `new URL("./xxx", import.meta.url)` syntax for build.
-function importMetaUrlServerPlugin(): Plugin {
+export function importMetaUrlServerPlugin(): Plugin {
   // https://github.com/vitejs/vite/blob/0f56e1724162df76fffd5508148db118767ebe32/packages/vite/src/node/plugins/assetImportMetaUrl.ts#L51-L52
   const assetImportMetaUrlRE =
     /\bnew\s+URL\s*\(\s*('[^']+'|"[^"]+"|`[^`]+`)\s*,\s*import\.meta\.url\s*(?:,\s*)?\)/dg;

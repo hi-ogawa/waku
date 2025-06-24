@@ -27,6 +27,10 @@ export default function wakuViteRscPlugin(wakuOptions?: {
     react(),
     rsc({
       ignoredPackageWarnings: [PKG_NAME],
+      // by default, it copies only ".css" for security reasons.
+      // this should expanded or exposed based on Waku's opinion.
+      copyServerAssetsToClient: (fileName) =>
+        fileName.endsWith('.txt') || fileName.endsWith('.css'),
     }),
     {
       name: 'rsc:waku',
