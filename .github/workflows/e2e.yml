@@ -190,6 +190,7 @@ jobs:
               /ssg-wildcard \
               /ssr-basic \
               /ssr-context-provider \
+              /ssr-redirect \
               /ssr-swr \
               /ssr-target-bundle \
         timeout-minutes: 15
