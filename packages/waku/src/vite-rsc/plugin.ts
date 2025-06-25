@@ -256,7 +256,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
     }),
     createVirtualPlugin('vite-rsc-waku/hono-enhancer', async function () {
       if (!wakuConfig?.unstable_honoEnhancer) {
-        return `export const honoEnhancer = undefined;`;
+        return `export const honoEnhancer = (app) => app;`;
       }
       let id = wakuConfig.unstable_honoEnhancer;
       if (id[0] === '.') {
@@ -266,7 +266,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
         }
       }
       return `
-        export __m from ${JSON.stringify(id)};
+        import __m from ${JSON.stringify(id)};
         export const honoEnhancer = __m;
       `;
     }),
