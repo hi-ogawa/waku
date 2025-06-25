@@ -3,6 +3,7 @@ import {
   normalizePath,
   runnerImport,
   type EnvironmentOptions,
+  type Plugin,
   type PluginOption,
   type UserConfig,
 } from 'vite';
@@ -205,31 +206,37 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
         }
       },
     },
-    {
-      name: 'rsc:waku:middleware',
-      resolveId(source) {
-        if (source === 'virtual:vite-rsc-waku/middlewares') {
-          return '\0' + source;
+    createVirtualPlugin('vite-rsc-waku/middlewares', async () => {
+      // TODO: for now a toy middleware implementation
+      // to cover the use cases in e2e/broken-links and ssr-catch-error
+      const files = (wakuConfig?.middleware ?? [])
+        .filter((file) => !file.startsWith('waku/'))
+        .map((file) => path.resolve(file));
+      let code = '';
+      files.forEach((file, i) => {
+        code += `import __m_${i} from ${JSON.stringify(file)};\n`;
+      });
+      code += `export default [`;
+      code += files.map((_, i) => `__m_${i}()`).join(',\n');
+      code += `];\n`;
+      return code;
+    }),
+    createVirtualPlugin('vite-rsc-waku/hono-enhancer', async function () {
+      if (!wakuConfig?.unstable_honoEnhancer) {
+        return `export const honoEnhancer = undefined;`;
+      }
+      let id = wakuConfig.unstable_honoEnhancer;
+      if (id[0] === '.') {
+        const resolved = await this.resolve(id);
+        if (resolved) {
+          id = resolved.id;
         }
-      },
-      load(id) {
-        if (id === '\0virtual:vite-rsc-waku/middlewares') {
-          // TODO: for now a toy middleware implementation
-          // to cover the use cases in e2e/broken-links and ssr-catch-error
-          const files = (wakuConfig?.middleware ?? [])
-            .filter((file) => !file.startsWith('waku/'))
-            .map((file) => path.resolve(file));
-          let code = '';
-          files.forEach((file, i) => {
-            code += `import __m_${i} from ${JSON.stringify(file)};\n`;
-          });
-          code += `export default [`;
-          code += files.map((_, i) => `__m_${i}()`).join(',\n');
-          code += `];\n`;
-          return code;
-        }
-      },
-    },
+      }
+      return `
+        export __m from ${JSON.stringify(id)};
+        export const honoEnhancer = __m;
+      `;
+    }),
     {
       // rewrite `react-server-dom-webpack` in `waku/minimal/client`
       name: 'rsc:waku:patch-webpack',
@@ -397,4 +404,17 @@ function normalizeRelativePath(s: string) {
   return s[0] === '.' ? s : './' + s;
 }
 
-// function createVirtual
+function createVirtualPlugin(name: string, load: Plugin['load']) {
+  name = 'virtual:' + name;
+  return {
+    name: `waku:virtual-${name}`,
+    resolveId(source, _importer, _options) {
+      return source === name ? '\0' + name : undefined;
+    },
+    load(id, options) {
+      if (id === '\0' + name) {
+        return (load as Function).apply(this, [id, options]);
+      }
+    },
+  } satisfies Plugin;
+}
