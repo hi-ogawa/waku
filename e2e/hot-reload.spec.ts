@@ -104,7 +104,9 @@ test.describe.serial('hot reload', () => {
     await expect(page.getByText('Edited Page')).toBeVisible();
 
     // TODO: not sure the desired behavior.
-    if (process.env.TEST_VITE_RSC) return;
+    if (process.env.TEST_VITE_RSC) {
+      return;
+    }
 
     // Modify with a JSX syntax error
     await modifyFile(

@@ -134,7 +134,12 @@ test.describe(`useRouter`, async () => {
       await waitForHydration(page);
       await page.click('text=Static router.push button');
       await expect(page.getByRole('heading', { name: 'Static' })).toBeVisible();
-      expect(msgs).toEqual(expect.arrayContaining(['Route change started', 'Route change completed']));
+      expect(msgs).toEqual(
+        expect.arrayContaining([
+          'Route change started',
+          'Route change completed',
+        ]),
+      );
     });
   });
 });

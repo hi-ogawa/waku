@@ -35,11 +35,17 @@ export function wakuAllowServerPlugin(): Plugin {
   return {
     name: 'waku:allow-server',
     transform(code) {
-      if (this.environment.name !== 'rsc') return;
-      if (!code.includes('use client')) return;
+      if (this.environment.name !== 'rsc') {
+        return;
+      }
+      if (!code.includes('use client')) {
+        return;
+      }
 
       const mod = swc.parseSync(code);
-      if (!hasDirective(mod, 'use client')) return;
+      if (!hasDirective(mod, 'use client')) {
+        return;
+      }
 
       const exportNames = transformExportedClientThings(mod, () => '', {
         dceOnly: true,

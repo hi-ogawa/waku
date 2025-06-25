@@ -24,7 +24,9 @@ export function wakuDeployVercelPlugin(): Plugin {
       order: 'post',
       sequential: true,
       async handler() {
-        if (this.environment.name !== 'ssr') return;
+        if (this.environment.name !== 'ssr') {
+          return;
+        }
         await buildVercel();
       },
     },

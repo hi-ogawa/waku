@@ -49,7 +49,7 @@ test.describe(`ssr-target-bundle`, () => {
 
   test('add text input', async ({ page }) => {
     await page.goto(`http://localhost:${port}/`);
-    await waitForHydration(page)
+    await waitForHydration(page);
     await expect(page.getByTestId('app-name')).toHaveText('Waku');
     await expect(page.getByTestId('textarea')).toHaveValue('EMPTY');
     const height = await page

@@ -288,10 +288,10 @@ export const prepareStandaloneSetup = (fixtureName: string) => {
 export async function waitForHydration(page: Page) {
   await page.waitForFunction(
     () => {
-      const el = document.querySelector("body");
+      const el = document.querySelector('body');
       if (el) {
         const keys = Object.keys(el);
-        return keys.some((key) => key.startsWith("__reactFiber"));
+        return keys.some((key) => key.startsWith('__reactFiber'));
       }
     },
     null,

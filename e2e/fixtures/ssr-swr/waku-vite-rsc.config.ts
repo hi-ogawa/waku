@@ -5,13 +5,13 @@ export default {
   environments: {
     client: {
       optimizeDeps: {
-        include: ["swr"]
-      }
+        include: ['swr'],
+      },
     },
     ssr: {
       optimizeDeps: {
-        include: ["swr"]
-      }
+        include: ['swr'],
+      },
     },
-  }
-}
+  },
+};
