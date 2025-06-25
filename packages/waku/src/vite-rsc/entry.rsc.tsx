@@ -153,11 +153,15 @@ export default async function handler(request: Request): Promise<Response> {
       };
     } else {
       // client RSC request
-      let rscParams: unknown;
-      if (request.method === 'POST' && request.body) {
-        // TODO: refetch with params?
-        // TODO: error in jotai allowServer integration
-        rscParams = await request.json();
+      let rscParams: unknown = url.searchParams;
+      if (request.body) {
+        const contentType = request.headers.get('content-type');
+        const body = contentType?.startsWith('multipart/form-data')
+          ? await request.formData()
+          : await request.text();
+        rscParams = await ReactServer.decodeReply(body, {
+          temporaryReferences,
+        });
       }
       wakuInput = {
         type: 'component',
