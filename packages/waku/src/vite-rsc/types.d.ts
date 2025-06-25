@@ -15,7 +15,7 @@ declare module 'react-dom/server.edge' {
 declare module 'virtual:vite-rsc-waku/set-platform-data' {}
 
 declare module 'virtual:vite-rsc-waku/middlewares' {
-  export const middlewares: ReturnType<import('../config.ts').Middleware>[];
+  export const middlewares: import('../config.ts').Middleware[];
 }
 
 declare module 'virtual:vite-rsc-waku/hono-enhancer' {

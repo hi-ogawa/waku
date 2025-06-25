@@ -12,7 +12,11 @@ import { INTERNAL_setAllEnv } from '../server.js';
 import { joinPath } from '../lib/utils/path.js';
 import { runWithContext } from '../lib/middleware/context.js';
 import { getErrorInfo } from '../lib/utils/custom-errors.js';
-import type { HandlerContext } from '../lib/middleware/types.js';
+import type {
+  HandlerContext,
+  Middleware,
+  MiddlewareOptions,
+} from '../lib/middleware/types.js';
 
 //
 // server handler entry point
@@ -33,7 +37,7 @@ export default async function handler(request: Request): Promise<Response> {
     data: {},
   };
 
-  const { middlewares } = await import('virtual:vite-rsc-waku/middlewares');
+  const middlewares = await loadMiddlewares();
   for (const middleware of middlewares) {
     let next = false;
     await middleware(ctx, async () => {
@@ -57,6 +61,37 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   return new Response('404 Not Found', { status: 404 });
+}
+
+let loadMiddlewares_: ReturnType<Middleware>[] | undefined;
+
+async function loadMiddlewares() {
+  if (!loadMiddlewares_) {
+    const { middlewares } = await import('virtual:vite-rsc-waku/middlewares');
+    // TODO: check if this is essential
+    let middlwareOptions: MiddlewareOptions;
+    if (import.meta.env.DEV) {
+      middlwareOptions = {
+        cmd: 'dev',
+        env: {},
+        unstable_onError: new Set(),
+        get config(): any {
+          throw new Error('unsupported');
+        },
+      };
+    } else {
+      middlwareOptions = {
+        cmd: 'start',
+        env: {},
+        unstable_onError: new Set(),
+        get loadEntries(): any {
+          throw new Error('unsupported');
+        },
+      };
+    }
+    loadMiddlewares_ = middlewares.map((m) => m(middlwareOptions));
+  }
+  return loadMiddlewares_;
 }
 
 //

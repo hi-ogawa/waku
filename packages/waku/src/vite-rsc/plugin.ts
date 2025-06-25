@@ -206,18 +206,48 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
         }
       },
     },
-    createVirtualPlugin('vite-rsc-waku/middlewares', async () => {
-      // TODO: for now a toy middleware implementation
-      // to cover the use cases in e2e/broken-links and ssr-catch-error
-      const files = (wakuConfig?.middleware ?? [])
-        .filter((file) => !file.startsWith('waku/'))
-        .map((file) => path.resolve(file));
+    createVirtualPlugin('vite-rsc-waku/middlewares', async function () {
+      // minor tweak on middleware convention
+      // TODO: discuss
+      const pre: string[] = [];
+      const post: string[] = [];
+      const builtins: string[] = [];
+      for (const file of wakuConfig?.middleware ?? []) {
+        if (file.startsWith('waku/')) {
+          builtins.push(file);
+          continue;
+        }
+        let id = file;
+        if (file[0] === '.') {
+          const resolved = await this.resolve(file);
+          if (resolved) {
+            id = resolved.id;
+          }
+        }
+        if (builtins.includes('waku/handler')) {
+          post.includes(id);
+        } else {
+          pre.includes(id);
+        }
+      }
+      if (!builtins.includes('waku/handler')) {
+        this.warn(
+          "'waku/handler' is not found in 'config.middlewares', but it is always enabled.",
+        );
+      }
+      if (post.length > 0) {
+        this.warn(
+          "post middlewares after 'waku/handler' are currently ignored. " +
+            JSON.stringify(post),
+        );
+      }
+
       let code = '';
-      files.forEach((file, i) => {
+      pre.forEach((file, i) => {
         code += `import __m_${i} from ${JSON.stringify(file)};\n`;
       });
       code += `export const middlewares = [`;
-      code += files.map((_, i) => `__m_${i}()`).join(',\n');
+      code += pre.map((_, i) => `__m_${i}`).join(',\n');
       code += `];\n`;
       return code;
     }),
