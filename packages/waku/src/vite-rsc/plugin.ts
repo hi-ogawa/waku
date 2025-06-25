@@ -254,6 +254,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
       code += `];\n`;
       return code;
     }),
+    // TODO
     createVirtualPlugin('vite-rsc-waku/hono-enhancer', async function () {
       if (!wakuConfig?.unstable_honoEnhancer) {
         return `export const honoEnhancer = (app) => app;`;

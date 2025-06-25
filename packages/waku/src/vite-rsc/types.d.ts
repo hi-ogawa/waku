@@ -19,5 +19,5 @@ declare module 'virtual:vite-rsc-waku/middlewares' {
 }
 
 declare module 'virtual:vite-rsc-waku/hono-enhancer' {
-  export const honoEnhancer: import('../cli.ts').HonoEnhancer | undefined;
+  export const honoEnhancer: import('../cli.ts').HonoEnhancer;
 }
