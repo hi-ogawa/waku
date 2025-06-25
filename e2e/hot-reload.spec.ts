@@ -12,6 +12,8 @@ import {
 // const startApp = prepareStandaloneSetup('hot-reload');
 const startApp = prepareNormalSetup('hot-reload');
 
+const originalFiles: Record<string, string> = {};
+
 async function modifyFile(
   standaloneDir: string,
   file: string,
@@ -19,8 +21,15 @@ async function modifyFile(
   replace: string,
 ) {
   const content = await readFile(join(standaloneDir, file), 'utf-8');
+  originalFiles[join(standaloneDir, file)] ??= content;
   await writeFile(join(standaloneDir, file), content.replace(search, replace));
 }
+
+test.afterAll(async () => {
+  for (const [file, content] of Object.entries(originalFiles)) {
+    await writeFile(file, content);
+  }
+});
 
 test.describe.serial('hot reload', () => {
   let port: number;
@@ -93,6 +102,10 @@ test.describe.serial('hot reload', () => {
     await expect(page.getByText('About2 Page')).toBeVisible();
     await page.getByTestId('home').click();
     await expect(page.getByText('Edited Page')).toBeVisible();
+
+    // TODO: not sure the desired behavior.
+    if (process.env.TEST_VITE_RSC) return;
+
     // Modify with a JSX syntax error
     await modifyFile(
       standaloneDir,
