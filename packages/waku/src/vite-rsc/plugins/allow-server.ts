@@ -46,7 +46,8 @@ export function wakuAllowServerPlugin(): Plugin {
       });
       let newCode = swc.printSync(mod).code;
       for (const name of exportNames) {
-        newCode += `export ${name === 'default' ? name : `const ${name} =`} __waku_no_keep__;\n`;
+        const value = `() => { throw new Error('It is not possible to invoke a client function from the server: ${JSON.stringify(name)}') }`;
+        newCode += `export ${name === 'default' ? name : `const ${name} =`} ${value};\n`;
       }
       return `"use client";` + newCode;
     },

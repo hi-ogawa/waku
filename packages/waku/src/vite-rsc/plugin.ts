@@ -42,7 +42,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
     react(),
     wakuAllowServerPlugin(), // apply `allowServer` DCE before "use client" transform
     rsc({
-      keepUseCientProxy: (value) => value !== '__waku_no_keep__',
+      keepUseCientProxy: true,
       ignoredPackageWarnings: [PKG_NAME],
       // by default, it copies only ".css" for security reasons.
       // this should expanded or exposed based on Waku's opinion.
