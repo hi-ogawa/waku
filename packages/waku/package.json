@@ -90,6 +90,7 @@
     "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@57e0468",
     "@hono/node-server": "1.14.3",
     "@swc/core": "1.11.31",
+    "@vercel/nft": "^0.29.4",
     "@vitejs/plugin-react": "4.5.1",
     "dotenv": "16.5.0",
     "hono": "4.7.11",

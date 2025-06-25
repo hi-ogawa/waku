@@ -19,6 +19,7 @@ import {
   getManagedEntries,
   getManagedMain,
 } from '../lib/plugins/vite-plugin-rsc-managed.js';
+import { wakuDeployVercelPlugin } from './deploy/vercel/plugin.js';
 
 // TODO: refactor and reuse common plugins from lib/plugins
 
@@ -26,6 +27,15 @@ const PKG_NAME = 'waku';
 
 export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
   let wakuConfig: Config | undefined;
+  let wakuFlags: Record<string, unknown> = {};
+  // for now passed through main cli
+  if (process.env.WAKU_VITE_RSC_FLAGS) {
+    try {
+      wakuFlags = JSON.parse(process.env.WAKU_VITE_RSC_FLAGS);
+    } catch (e) {
+      console.error('[failed to load cli flags]', e);
+    }
+  }
 
   return [
     react(),
@@ -120,7 +130,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
         if (name === 'client') {
           config.build ??= {};
           config.build.outDir = 'dist/public';
-          if (process.env.WAKU_VITE_RSC_EXPERIMENTAL_PARTIAL) {
+          if (wakuFlags['experimental-partial']) {
             config.build.emptyOutDir = false;
           }
         }
@@ -333,6 +343,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
       // cf. packages/waku/src/lib/builder/build.ts
       writeBundle: {
         order: 'post',
+        sequential: true,
         async handler(_options, _bundle) {
           if (this.environment.name !== 'ssr') {
             return;
@@ -375,6 +386,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
         },
       },
     },
+    !!wakuFlags['with-vercel'] && wakuDeployVercelPlugin(),
   ];
 }
 
