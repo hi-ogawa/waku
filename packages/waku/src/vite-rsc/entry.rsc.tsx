@@ -24,15 +24,14 @@ import { honoEnhancer } from 'virtual:vite-rsc-waku/hono-enhancer';
 // server handler entry point
 //
 
-export const app = honoEnhancer<Hono>(createApp)(new Hono());
+export let app = new Hono();
+export default (request: Request) => app.fetch(request);
 
-function createApp(app: Hono): Hono {
-  // TODO: experimental-compress
-  // TODO: notFound
-  // TODO: serveStatic
-  app.use((ctx) => handler(ctx.req.raw));
-  return app;
+if (honoEnhancer) {
+  app = honoEnhancer<Hono>((app) => app)(app);
 }
+
+app.use((ctx) => handler(ctx.req.raw));
 
 async function handler(request: Request): Promise<Response> {
   INTERNAL_setAllEnv(process.env as any);
