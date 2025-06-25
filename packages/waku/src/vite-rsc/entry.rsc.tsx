@@ -156,6 +156,7 @@ export default async function handler(request: Request): Promise<Response> {
       let rscParams: unknown;
       if (request.method === 'POST' && request.body) {
         // TODO: refetch with params?
+        // TODO: error in jotai allowServer integration
         rscParams = await request.json();
       }
       wakuInput = {

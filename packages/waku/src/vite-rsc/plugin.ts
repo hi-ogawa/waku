@@ -20,6 +20,7 @@ import {
   getManagedMain,
 } from '../lib/plugins/vite-plugin-rsc-managed.js';
 import { wakuDeployVercelPlugin } from './deploy/vercel/plugin.js';
+import { wakuAllowServerPlugin } from './plugins/allow-server.js';
 
 // TODO: refactor and reuse common plugins from lib/plugins
 
@@ -39,7 +40,9 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
 
   return [
     react(),
+    wakuAllowServerPlugin(), // apply `allowServer` DCE before "use client" transform
     rsc({
+      keepUseCientProxy: (value) => value !== '__waku_no_keep__',
       ignoredPackageWarnings: [PKG_NAME],
       // by default, it copies only ".css" for security reasons.
       // this should expanded or exposed based on Waku's opinion.
@@ -187,7 +190,6 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
         }
       },
       load(id) {
-        // cf. packages/waku/src/lib/plugins/vite-plugin-rsc-managed.ts
         if (id === '\0virtual:vite-rsc-waku/server-entry') {
           return getManagedEntries(
             path.join(this.environment.config.root, 'src/server-entry.js'),

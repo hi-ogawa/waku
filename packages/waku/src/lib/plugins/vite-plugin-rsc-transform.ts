@@ -111,7 +111,7 @@ export const createEmptySpan = (): swc.Span =>
     end: 0,
   }) as swc.Span;
 
-const createIdentifier = (value: string): swc.Identifier => ({
+export const createIdentifier = (value: string): swc.Identifier => ({
   type: 'Identifier',
   value,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment

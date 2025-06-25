@@ -87,7 +87,7 @@
     "node": "^24.0.0 || ^22.7.0 || ^20.8.0"
   },
   "dependencies": {
-    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@57e0468",
+    "@hiogawa/vite-rsc": "https://pkg.pr.new/hi-ogawa/vite-plugins/@hiogawa/vite-rsc@1c0780c",
     "@hono/node-server": "1.14.3",
     "@swc/core": "1.11.31",
     "@vercel/nft": "^0.29.4",
