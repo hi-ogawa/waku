@@ -224,20 +224,20 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
             id = resolved.id;
           }
         }
-        if (builtins.includes('waku/handler')) {
+        if (builtins.includes('waku/middleware/handler')) {
           post.includes(id);
         } else {
           pre.includes(id);
         }
       }
-      if (!builtins.includes('waku/handler')) {
+      if (!builtins.includes('waku/middleware/handler')) {
         this.warn(
-          "'waku/handler' is not found in 'config.middlewares', but it is always enabled.",
+          "'waku/middleware/handler' is not found in 'config.middlewares', but it is always enabled.",
         );
       }
       if (post.length > 0) {
         this.warn(
-          "post middlewares after 'waku/handler' are currently ignored. " +
+          "Post middlewares after 'waku/middleware/handler' are currently ignored. " +
             JSON.stringify(post),
         );
       }
