@@ -1,6 +1,7 @@
 import {
   mergeConfig,
   normalizePath,
+  RunnableDevEnvironment,
   runnerImport,
   type EnvironmentOptions,
   type Plugin,
@@ -22,8 +23,8 @@ import {
 } from '../lib/plugins/vite-plugin-rsc-managed.js';
 import { wakuDeployVercelPlugin } from './deploy/vercel/plugin.js';
 import { wakuAllowServerPlugin } from './plugins/allow-server.js';
-
-// TODO: refactor and reuse common plugins from lib/plugins
+import { getRequestListener } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
 
 const PKG_NAME = 'waku';
 
@@ -43,7 +44,8 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
     react(),
     wakuAllowServerPlugin(), // apply `allowServer` DCE before "use client" transform
     rsc({
-      keepUseCientProxy: true,
+      serverHandler: false, // Waku sets up own dev/start handler using Hono
+      keepUseCientProxy: true, // Waku's `allowServer` handles DCE
       ignoredPackageWarnings: [PKG_NAME],
       // by default, it copies only ".css" for security reasons.
       // this should expanded or exposed based on Waku's opinion.
@@ -155,17 +157,57 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
           },
         };
       },
+      configureServer(server) {
+        const environment = server.environments.rsc as RunnableDevEnvironment;
+        const entryId: string = (
+          environment.config.build.rollupOptions.input as any
+        ).index;
+
+        // function applyHonoEnhancer() {
+        // }
+
+        return () => {
+          server.middlewares.use(async (req, res, next) => {
+            try {
+              const resolved =
+                await environment.pluginContainer.resolveId(entryId);
+              const mod = await environment.runner.import<
+                typeof import('./entry.rsc.js')
+              >(resolved!.id);
+              await getRequestListener(mod.app.fetch)(req, res);
+            } catch (e) {
+              next(e);
+            }
+          });
+        };
+      },
       async configurePreviewServer(server) {
         // server ssg html
         // TODO: integrate hono
-        const outDir = server.config.environments.client!.build.outDir;
-        server.middlewares.use((req, _res, next) => {
-          const url = new URL(req.url!, 'https://test.local');
-          const htmlFile = url.pathname + '/index.html';
-          if (fs.existsSync(path.join(outDir, htmlFile))) {
-            req.url = htmlFile;
+        // const outDir = server.config.environments.client!.build.outDir;
+        // server.middlewares.use((req, _res, next) => {
+        //   const url = new URL(req.url!, 'https://test.local');
+        //   const htmlFile = url.pathname + '/index.html';
+        //   if (fs.existsSync(path.join(outDir, htmlFile))) {
+        //     req.url = htmlFile;
+        //   }
+        //   next();
+        // });
+
+        const entryFile = path.join(
+          server.config.environments.rsc!!.build.outDir,
+          `index.js`,
+        );
+        const entry = pathToFileURL(entryFile).href;
+        const mod: typeof import('./entry.rsc.js') = await import(
+          /* @vite-ignore */ entry
+        );
+        server.middlewares.use(async (req, res, next) => {
+          try {
+            await getRequestListener(mod.app.fetch)(req, res);
+          } catch (e) {
+            next(e);
           }
-          next();
         });
       },
     },
@@ -256,7 +298,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
     }),
     createVirtualPlugin('vite-rsc-waku/hono-enhancer', async function () {
       if (!wakuConfig?.unstable_honoEnhancer) {
-        return `export const honoEnhancer = undefined;`;
+        return `export const honoEnhancer = (app) => app`;
       }
       let id = wakuConfig.unstable_honoEnhancer;
       if (id[0] === '.') {
