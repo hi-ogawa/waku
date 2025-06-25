@@ -319,6 +319,7 @@ test.describe(`create-pages`, () => {
 
   test('static page part', async ({ page }) => {
     await page.goto(`http://localhost:${port}/page-parts`);
+    await waitForHydration(page);
     const staticPageTime = (
       await page
         .getByRole('heading', { name: 'Static Page Part' })
