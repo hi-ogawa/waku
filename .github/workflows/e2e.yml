@@ -177,23 +177,6 @@ jobs:
             --shard=${{ matrix.shared }}/${{ matrix.shardTotal }} \
             --project=chromium-dev \
             --project=chromium-prd \
-              /broken-links \
-              /create-pages \
-              /define-router \
-              /partial-build \
-              /render-type \
-              /fs-router \
-              /monorepo \
-              /rsc-asset \
-              /rsc-basic \
-              /rsc-css-modules \
-              /ssg-performance \
-              /ssg-wildcard \
-              /ssr-basic \
-              /ssr-context-provider \
-              /ssr-redirect \
-              /ssr-swr \
-              /ssr-target-bundle \
         timeout-minutes: 15
         env:
           TEMP_DIR: ${{ runner.temp }}
