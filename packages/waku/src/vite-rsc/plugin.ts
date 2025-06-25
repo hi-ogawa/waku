@@ -216,7 +216,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
       files.forEach((file, i) => {
         code += `import __m_${i} from ${JSON.stringify(file)};\n`;
       });
-      code += `export default [`;
+      code += `export const middlewares = [`;
       code += files.map((_, i) => `__m_${i}()`).join(',\n');
       code += `];\n`;
       return code;
