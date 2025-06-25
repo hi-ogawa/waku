@@ -24,9 +24,7 @@ import {
 
 const PKG_NAME = 'waku';
 
-export default function wakuViteRscPlugin(wakuOptions?: {
-  serverHmr?: boolean | 'reload';
-}): PluginOption {
+export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
   let wakuConfig: Config | undefined;
 
   return [
@@ -79,10 +77,7 @@ export default function wakuViteRscPlugin(wakuOptions?: {
           define: {
             'import.meta.env.WAKU_CONFIG_BASE_PATH': JSON.stringify('/'),
             'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify('RSC'),
-            // TODO: it fails on router examples, so for now force reload by default
-            'import.meta.env.WAKU_SERVER_HMR': JSON.stringify(
-              wakuOptions?.serverHmr ?? 'reload',
-            ),
+            'import.meta.env.WAKU_SERVER_HMR': JSON.stringify(true),
           },
           environments: {
             client: toEnvironmentOption('entry.browser'),
@@ -250,9 +245,6 @@ export default function wakuViteRscPlugin(wakuOptions?: {
       name: 'rsc:waku:patch-server-hmr',
       apply: 'serve',
       async transform(code, id) {
-        if (wakuOptions?.serverHmr !== true) {
-          return;
-        }
         if (this.environment.name !== 'client') {
           return;
         }
@@ -276,6 +268,31 @@ export default function wakuViteRscPlugin(wakuOptions?: {
     globalThis.__WAKU_RSC_RELOAD_LISTENERS__.push(refetchRsc);
   }
   globalThis.__WAKU_REFETCH_RSC__ = refetchRsc;
+}
+`,
+          );
+        } else if (id.includes('/waku/dist/router/client.js')) {
+          return code.replace(
+            /\nconst InnerRouter = \(.*?\)=>\{/,
+            (m) =>
+              m +
+              `
+{
+  const refetchRoute = () => {
+    staticPathSetRef.current.clear();
+    cachedIdSetRef.current.clear();
+    const rscPath = encodeRoutePath(route.path);
+    const rscParams = createRscParams(route.query, []);
+    refetch(rscPath, rscParams);
+  };
+  globalThis.__WAKU_RSC_RELOAD_LISTENERS__ ||= [];
+  const index = globalThis.__WAKU_RSC_RELOAD_LISTENERS__.indexOf(globalThis.__WAKU_REFETCH_ROUTE__);
+  if (index !== -1) {
+    globalThis.__WAKU_RSC_RELOAD_LISTENERS__.splice(index, 1, refetchRoute);
+  } else {
+    globalThis.__WAKU_RSC_RELOAD_LISTENERS__.unshift(refetchRoute);
+  }
+  globalThis.__WAKU_REFETCH_ROUTE__ = refetchRoute;
 }
 `,
           );
