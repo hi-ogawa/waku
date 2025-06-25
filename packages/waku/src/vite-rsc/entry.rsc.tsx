@@ -108,8 +108,7 @@ export default async function handler(request: Request): Promise<Response> {
   const res: HandlerRes = {};
   const contextData: Record<string, unknown> = {};
 
-  const middlewares = (await import('virtual:vite-rsc-waku/middlewares'))
-    .default;
+  const { middlewares } = await import('virtual:vite-rsc-waku/middlewares');
   for (const middleware of middlewares) {
     let next = false;
     await middleware({ req, res, data: contextData }, async () => {

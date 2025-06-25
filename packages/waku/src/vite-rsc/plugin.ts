@@ -396,3 +396,5 @@ function normalizeRelativePath(s: string) {
   s = normalizePath(s);
   return s[0] === '.' ? s : './' + s;
 }
+
+// function createVirtual
