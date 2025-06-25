@@ -14,7 +14,11 @@ import { runWithContext } from '../lib/middleware/context.js';
 import { getErrorInfo } from '../lib/utils/custom-errors.js';
 import type { HandlerContext } from '../lib/middleware/types.js';
 
+//
 // server handler entry point
+// TODO: use Hono
+//
+
 export default async function handler(request: Request): Promise<Response> {
   INTERNAL_setAllEnv(process.env as any);
 
@@ -54,6 +58,10 @@ export default async function handler(request: Request): Promise<Response> {
 
   return new Response('404 Not Found', { status: 404 });
 }
+
+//
+// Core RSC integration
+//
 
 export type RscElementsPayload = Record<string, unknown>;
 export type RscHtmlPayload = React.ReactNode;
