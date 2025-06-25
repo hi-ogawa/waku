@@ -63,10 +63,10 @@ export default async function handler(request: Request): Promise<Response> {
   return new Response('404 Not Found', { status: 404 });
 }
 
-let loadMiddlewares_: ReturnType<Middleware>[] | undefined;
+let loadedMiddlewares_: ReturnType<Middleware>[] | undefined;
 
 async function loadMiddlewares() {
-  if (!loadMiddlewares_) {
+  if (!loadedMiddlewares_) {
     const { middlewares } = await import('virtual:vite-rsc-waku/middlewares');
     // TODO: check if this is essential
     let middlwareOptions: MiddlewareOptions;
@@ -89,9 +89,9 @@ async function loadMiddlewares() {
         },
       };
     }
-    loadMiddlewares_ = middlewares.map((m) => m(middlwareOptions));
+    loadedMiddlewares_ = middlewares.map((m) => m(middlwareOptions));
   }
-  return loadMiddlewares_;
+  return loadedMiddlewares_;
 }
 
 //
