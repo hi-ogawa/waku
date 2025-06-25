@@ -166,7 +166,7 @@ export default async function handler(request: Request): Promise<Response> {
       wakuInput = {
         type: 'component',
         rscPath,
-        rscParams: rscParams ?? url.searchParams,
+        rscParams,
         req,
       };
     }
@@ -186,14 +186,14 @@ export default async function handler(request: Request): Promise<Response> {
           const result = await decodedAction();
           return await ReactServer.decodeFormState(result, formData);
         },
-        pathname: url.pathname,
+        pathname: decodeURI(url.pathname),
         req,
       };
     } else {
       // POST API request
       wakuInput = {
         type: 'custom',
-        pathname: url.pathname,
+        pathname: decodeURI(url.pathname),
         req,
       };
     }
@@ -201,7 +201,7 @@ export default async function handler(request: Request): Promise<Response> {
     // SSR
     wakuInput = {
       type: 'custom',
-      pathname: url.pathname,
+      pathname: decodeURI(url.pathname),
       req,
     };
   }
