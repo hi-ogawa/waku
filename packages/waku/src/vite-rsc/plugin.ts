@@ -225,9 +225,9 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
           }
         }
         if (builtins.includes('waku/middleware/handler')) {
-          post.includes(id);
+          post.push(id);
         } else {
-          pre.includes(id);
+          pre.push(id);
         }
       }
       if (!builtins.includes('waku/middleware/handler')) {

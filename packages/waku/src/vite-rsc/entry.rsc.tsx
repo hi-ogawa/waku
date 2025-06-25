@@ -55,7 +55,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (ctx.res.body || ctx.res.status) {
     return new Response(ctx.res.body || '', {
-      status: ctx.res.status || 200,
+      status: ctx.res.status ?? 200,
       headers: ctx.res.headers as any,
     });
   }
