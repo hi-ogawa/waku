@@ -17,13 +17,23 @@ import type {
   Middleware,
   MiddlewareOptions,
 } from '../lib/middleware/types.js';
+import { Hono } from 'hono';
+import { honoEnhancer } from 'virtual:vite-rsc-waku/hono-enhancer';
 
 //
 // server handler entry point
-// TODO: use Hono
 //
 
-export default async function handler(request: Request): Promise<Response> {
+export let app = new Hono();
+export default (request: Request) => app.fetch(request);
+
+if (honoEnhancer) {
+  app = honoEnhancer<Hono>((app) => app)(app);
+}
+
+app.use((ctx) => handler(ctx.req.raw));
+
+async function handler(request: Request): Promise<Response> {
   INTERNAL_setAllEnv(process.env as any);
 
   const ctx: HandlerContext = {
@@ -37,6 +47,7 @@ export default async function handler(request: Request): Promise<Response> {
     data: {},
   };
 
+  // TODO: nest async calls
   const middlewares = await loadMiddlewares();
   for (const middleware of middlewares) {
     let next = false;

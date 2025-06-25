@@ -209,10 +209,13 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
     createVirtualPlugin('vite-rsc-waku/middlewares', async function () {
       // minor tweak on middleware convention
       // TODO: discuss
+      const configMiddlware = wakuConfig?.middleware ?? [
+        'waku/middleware/handler',
+      ];
       const pre: string[] = [];
       const post: string[] = [];
       const builtins: string[] = [];
-      for (const file of wakuConfig?.middleware ?? []) {
+      for (const file of configMiddlware) {
         if (file.startsWith('waku/')) {
           builtins.push(file);
           continue;
