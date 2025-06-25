@@ -77,7 +77,6 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
           define: {
             'import.meta.env.WAKU_CONFIG_BASE_PATH': JSON.stringify('/'),
             'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify('RSC'),
-            'import.meta.env.WAKU_SERVER_HMR': JSON.stringify(true),
           },
           environments: {
             client: toEnvironmentOption('entry.browser'),
