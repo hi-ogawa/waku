@@ -45,7 +45,7 @@ export default async function handler(request: Request): Promise<Response> {
     });
     if (!next) {
       return new Response(ctx.res.body, {
-        status: ctx.res.status ?? 400,
+        status: ctx.res.status ?? 200,
         headers: ctx.res.headers as any,
       });
     }
