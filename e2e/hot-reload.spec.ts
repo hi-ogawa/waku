@@ -2,9 +2,15 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect } from '@playwright/test';
 
-import { test, prepareStandaloneSetup } from './utils.js';
+import {
+  test,
+  // prepareStandaloneSetup,
+  prepareNormalSetup,
+  waitForHydration,
+} from './utils.js';
 
-const startApp = prepareStandaloneSetup('hot-reload');
+// const startApp = prepareStandaloneSetup('hot-reload');
+const startApp = prepareNormalSetup('hot-reload');
 
 async function modifyFile(
   standaloneDir: string,
@@ -16,7 +22,7 @@ async function modifyFile(
   await writeFile(join(standaloneDir, file), content.replace(search, replace));
 }
 
-test.describe('hot reload', () => {
+test.describe.serial('hot reload', () => {
   let port: number;
   let stopApp: () => Promise<void>;
   let standaloneDir: string;
@@ -25,7 +31,8 @@ test.describe('hot reload', () => {
     'HMR is not available in production mode',
   );
   test.beforeAll(async () => {
-    ({ port, stopApp, standaloneDir } = await startApp('DEV'));
+    ({ port, stopApp, fixtureDir: standaloneDir } = await startApp('DEV'));
+    // ({ port, stopApp, standaloneDir } = await startApp('DEV'));
   });
   test.afterAll(async () => {
     await stopApp();
@@ -33,6 +40,7 @@ test.describe('hot reload', () => {
 
   test('server and client', async ({ page }) => {
     await page.goto(`http://localhost:${port}/`);
+    await waitForHydration(page);
     await expect(page.getByText('Home Page')).toBeVisible();
     await expect(page.getByTestId('count')).toHaveText('0');
     await page.getByTestId('increment').click();
@@ -104,6 +112,7 @@ test.describe('hot reload', () => {
 
   test('css modules', async ({ page }) => {
     await page.goto(`http://localhost:${port}/css-modules`);
+    await waitForHydration(page);
     await expect(page.getByTestId('css-modules-header')).toHaveText(
       'CSS Modules',
     );
@@ -136,6 +145,7 @@ test.describe('hot reload', () => {
     page,
   }) => {
     await page.goto(`http://localhost:${port}/css-modules-client`);
+    await waitForHydration(page);
     await expect(page.getByTestId('css-modules-client')).toHaveText('Hello');
     const bgColor1 = await page.evaluate(() =>
       window
