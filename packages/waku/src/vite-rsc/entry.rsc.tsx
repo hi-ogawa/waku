@@ -106,12 +106,13 @@ export default async function handler(request: Request): Promise<Response> {
     headers: Object.fromEntries(request.headers.entries()),
   };
   const res: HandlerRes = {};
+  const contextData: Record<string, unknown> = {};
 
   const middlewares = (await import('virtual:vite-rsc-waku/middlewares'))
     .default;
   for (const middleware of middlewares) {
     let next = false;
-    await middleware({ req, res, data: {} }, async () => {
+    await middleware({ req, res, data: contextData }, async () => {
       next = true;
     });
     if (!next) {
@@ -207,7 +208,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   let wakuResult: HandleRequestOutput;
   try {
-    wakuResult = await runWithContext({ req, data: {} }, () =>
+    wakuResult = await runWithContext({ req, data: contextData }, () =>
       wakuServerEntry.handleRequest(wakuInput, implementation),
     );
   } catch (e) {
