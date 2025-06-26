@@ -3,6 +3,8 @@ import waku, { type WakuPluginOptions } from './plugin.js';
 import type { Config } from '../config.js';
 
 export async function cli(cmd: string, flags: Record<string, any>) {
+  process.env.NODE_ENV ??= cmd === 'dev' ? 'development' : 'production';
+
   let wakuConfig: Config | undefined;
   try {
     const imported = await vite.runnerImport<{ default: Config }>(
