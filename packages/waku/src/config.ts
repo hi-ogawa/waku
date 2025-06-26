@@ -57,7 +57,6 @@ export interface Config {
    * Defaults to `undefined`
    */
   unstable_honoEnhancer?: string | undefined;
-
   /**
    * @deprecated use `vite` instead.
    * Vite configuration options.
@@ -76,7 +75,11 @@ export interface Config {
         'build-deploy'?: () => UserConfig;
       }
     | undefined;
-
+  /**
+   * Vite configuration options.
+   * See https://vite.dev/guide/api-environment-plugins.html#environment-api-for-plugins
+   * for how to configure or enable plugins per environment.
+   */
   vite?: UserConfig | undefined;
 }
 
