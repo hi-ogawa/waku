@@ -7,6 +7,9 @@ export function wakuDeployVercelPlugin(): Plugin {
     name: 'waku:deploy-vercel',
     config() {
       return {
+        define: {
+          'import.meta.env.WAKU_DEPLOY_SERVE_STATIC': JSON.stringify(false),
+        },
         environments: {
           rsc: {
             build: {

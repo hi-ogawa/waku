@@ -97,6 +97,7 @@ export default function wakuPlugin(
             'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify(
               wakuConfig.rscBase,
             ),
+            'import.meta.env.WAKU_DEPLOY_SERVE_STATIC': JSON.stringify(true),
           },
           environments: {
             client: toEnvironmentOption('entry.browser'),

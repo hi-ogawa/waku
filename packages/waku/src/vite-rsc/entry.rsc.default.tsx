@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { Hono } from 'hono';
 import handler, { handleBuild } from './entry.rsc.js';
 import { honoEnhancer } from 'virtual:vite-rsc-waku/hono-enhancer';
@@ -14,7 +15,7 @@ function createApp(app: Hono) {
   if (flags['experimental-compress']) {
     app.use(compress());
   }
-  if (!import.meta.env.DEV) {
+  if (import.meta.env.WAKU_DEPLOY_SERVE_STATIC) {
     app.use(serveStatic({ root: path.join(config.distDir, DIST_PUBLIC) }));
   }
   app.use((ctx) => handler(ctx.req.raw));
