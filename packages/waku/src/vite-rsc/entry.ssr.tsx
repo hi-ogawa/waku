@@ -14,7 +14,6 @@ export async function renderHTML(
     rscPath?: string | undefined;
     formState?: ReactFormState | undefined;
     nonce?: string | undefined;
-    debugNojs?: boolean | undefined;
   },
 ): Promise<ReadableStream<Uint8Array>> {
   // cf. packages/waku/src/lib/renderers/html.ts `renderHtml`
@@ -41,10 +40,9 @@ export async function renderHTML(
   const bootstrapScriptContent =
     await import.meta.viteRsc.loadBootstrapScriptContent('index');
   const htmlStream = await ReactDOMServer.renderToReadableStream(<SsrRoot />, {
-    bootstrapScriptContent: options?.debugNojs
-      ? undefined
-      : getBootstrapPreamble({ rscPath: options?.rscPath || '' }) +
-        bootstrapScriptContent,
+    bootstrapScriptContent:
+      getBootstrapPreamble({ rscPath: options?.rscPath || '' }) +
+      bootstrapScriptContent,
     nonce: options?.nonce,
     onError: (e: unknown) => {
       if (
@@ -61,13 +59,11 @@ export async function renderHTML(
   } as any);
 
   let responseStream: ReadableStream<Uint8Array> = htmlStream;
-  if (!options?.debugNojs) {
-    responseStream = responseStream.pipeThrough(
-      injectRscStreamToHtml(stream2, {
-        nonce: options?.nonce,
-      } as any),
-    );
-  }
+  responseStream = responseStream.pipeThrough(
+    injectRscStreamToHtml(stream2, {
+      nonce: options?.nonce,
+    } as any),
+  );
 
   return responseStream;
 }

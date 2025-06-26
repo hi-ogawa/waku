@@ -106,18 +106,14 @@ type HandleRequestInput = Parameters<WakuServerEntry['handleRequest']>[0];
 type HandleRequestOutput = Awaited<
   ReturnType<WakuServerEntry['handleRequest']>
 >;
-type HandleRequestImplementation = Parameters<
-  WakuServerEntry['handleRequest']
->[1];
+type RenderUtils = Parameters<WakuServerEntry['handleRequest']>[1];
 
 // core RSC/HTML rendering implementation
-function createImplementation({
+function createRenderUtils({
   temporaryReferences,
-  debugNojs,
 }: {
   temporaryReferences?: unknown;
-  debugNojs?: boolean;
-}): HandleRequestImplementation {
+}): RenderUtils {
   const onError = (e: unknown) => {
     if (
       e &&
@@ -159,7 +155,6 @@ function createImplementation({
         rscElementsStream,
         rscHtmlStream,
         {
-          debugNojs,
           formState: options?.actionResult,
           rscPath: options?.rscPath,
         },
@@ -262,14 +257,13 @@ async function handleRequest(request: Request, ctx: HandlerContext) {
     };
   }
 
-  const implementation = createImplementation({
+  const renderUtils = createRenderUtils({
     temporaryReferences,
-    debugNojs: url.searchParams.has('__nojs'),
   });
 
   let res: HandleRequestOutput;
   try {
-    res = await wakuServerEntry.handleRequest(wakuInput, implementation);
+    res = await wakuServerEntry.handleRequest(wakuInput, renderUtils);
   } catch (e) {
     const info = getErrorInfo(e);
     ctx.res.status = info?.status || 500;
@@ -310,11 +304,11 @@ export async function handleBuild() {
   const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
     .default;
 
-  const implementation = createImplementation({});
+  const renderUtils = createRenderUtils({});
 
   const buidlResult = wakuServerEntry.handleBuild({
-    renderRsc: implementation.renderRsc,
-    renderHtml: implementation.renderHtml,
+    renderRsc: renderUtils.renderRsc,
+    renderHtml: renderUtils.renderHtml,
     rscPath2pathname: (rscPath) => {
       0 && console.log('[rscPath2pathname]', { rscPath });
       return joinPath(
