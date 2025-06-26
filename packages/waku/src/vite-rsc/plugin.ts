@@ -173,7 +173,7 @@ export default function wakuPlugin(
         };
       },
       async configurePreviewServer(server) {
-        // server ssg html
+        // serve ssg html
         // TODO: integrate hono
         const outDir = server.config.environments.client!.build.outDir;
         server.middlewares.use((req, _res, next) => {
@@ -430,7 +430,12 @@ export default function wakuPlugin(
                 buildConfig.body,
               );
             } else {
-              console.warn('[waku:vite-rsc] ignored build task:', buildConfig);
+              // eslint-disable-next-line
+              0 &&
+                console.warn(
+                  '[waku:vite-rsc] ignored build task:',
+                  buildConfig,
+                );
             }
           }
           await waitForTasks();
