@@ -266,7 +266,9 @@ async function loadConfig(): Promise<Config> {
   return (await loadServerModule<{ default: Config }>(file)).default;
 }
 
-type HonoEnhancer = <Hono>(fn: (app: Hono) => Hono) => (app: Hono) => Hono;
+export type HonoEnhancer = <Hono>(
+  fn: (app: Hono) => Hono,
+) => (app: Hono) => Hono;
 
 async function loadHonoEnhancer(file: string): Promise<HonoEnhancer> {
   const { loadServerModule } = await import('./lib/utils/vite-loader.js');

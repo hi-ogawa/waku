@@ -3,6 +3,7 @@ import {
   normalizePath,
   runnerImport,
   type EnvironmentOptions,
+  type Plugin,
   type PluginOption,
   type UserConfig,
 } from 'vite';
@@ -205,31 +206,71 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
         }
       },
     },
-    {
-      name: 'rsc:waku:middleware',
-      resolveId(source) {
-        if (source === 'virtual:vite-rsc-waku/middlewares') {
-          return '\0' + source;
+    createVirtualPlugin('vite-rsc-waku/middlewares', async function () {
+      // minor tweak on middleware convention
+      // TODO: discuss
+      const configMiddlware = wakuConfig?.middleware ?? [
+        'waku/middleware/handler',
+      ];
+      const pre: string[] = [];
+      const post: string[] = [];
+      const builtins: string[] = [];
+      for (const file of configMiddlware) {
+        if (file.startsWith('waku/')) {
+          builtins.push(file);
+          continue;
         }
-      },
-      load(id) {
-        if (id === '\0virtual:vite-rsc-waku/middlewares') {
-          // TODO: for now a toy middleware implementation
-          // to cover the use cases in e2e/broken-links and ssr-catch-error
-          const files = (wakuConfig?.middleware ?? [])
-            .filter((file) => !file.startsWith('waku/'))
-            .map((file) => path.resolve(file));
-          let code = '';
-          files.forEach((file, i) => {
-            code += `import __m_${i} from ${JSON.stringify(file)};\n`;
-          });
-          code += `export default [`;
-          code += files.map((_, i) => `__m_${i}()`).join(',\n');
-          code += `];\n`;
-          return code;
+        let id = file;
+        if (file[0] === '.') {
+          const resolved = await this.resolve(file);
+          if (resolved) {
+            id = resolved.id;
+          }
         }
-      },
-    },
+        if (builtins.includes('waku/middleware/handler')) {
+          post.push(id);
+        } else {
+          pre.push(id);
+        }
+      }
+      if (!builtins.includes('waku/middleware/handler')) {
+        this.warn(
+          "'waku/middleware/handler' is not found in 'config.middlewares', but it is always enabled.",
+        );
+      }
+      if (post.length > 0) {
+        this.warn(
+          "Post middlewares after 'waku/middleware/handler' are currently ignored. " +
+            JSON.stringify(post),
+        );
+      }
+
+      let code = '';
+      pre.forEach((file, i) => {
+        code += `import __m_${i} from ${JSON.stringify(file)};\n`;
+      });
+      code += `export const middlewares = [`;
+      code += pre.map((_, i) => `__m_${i}`).join(',\n');
+      code += `];\n`;
+      return code;
+    }),
+    // TODO
+    createVirtualPlugin('vite-rsc-waku/hono-enhancer', async function () {
+      if (!wakuConfig?.unstable_honoEnhancer) {
+        return `export const honoEnhancer = (app) => app;`;
+      }
+      let id = wakuConfig.unstable_honoEnhancer;
+      if (id[0] === '.') {
+        const resolved = await this.resolve(id);
+        if (resolved) {
+          id = resolved.id;
+        }
+      }
+      return `
+        import __m from ${JSON.stringify(id)};
+        export const honoEnhancer = __m;
+      `;
+    }),
     {
       // rewrite `react-server-dom-webpack` in `waku/minimal/client`
       name: 'rsc:waku:patch-webpack',
@@ -395,4 +436,19 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
 function normalizeRelativePath(s: string) {
   s = normalizePath(s);
   return s[0] === '.' ? s : './' + s;
+}
+
+function createVirtualPlugin(name: string, load: Plugin['load']) {
+  name = 'virtual:' + name;
+  return {
+    name: `waku:virtual-${name}`,
+    resolveId(source, _importer, _options) {
+      return source === name ? '\0' + name : undefined;
+    },
+    load(id, options) {
+      if (id === '\0' + name) {
+        return (load as Function).apply(this, [id, options]);
+      }
+    },
+  } satisfies Plugin;
 }

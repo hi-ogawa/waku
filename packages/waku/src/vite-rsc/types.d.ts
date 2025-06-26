@@ -2,8 +2,7 @@
 /// <reference types="@hiogawa/vite-rsc/types" />
 
 declare module 'virtual:vite-rsc-waku/server-entry' {
-  import type { unstable_defineEntries } from 'waku/minimal/server';
-  const default_: ReturnType<typeof unstable_defineEntries>;
+  const default_: import('../lib/types.ts').EntriesDev['default'];
   export default default_;
 }
 
@@ -16,7 +15,9 @@ declare module 'react-dom/server.edge' {
 declare module 'virtual:vite-rsc-waku/set-platform-data' {}
 
 declare module 'virtual:vite-rsc-waku/middlewares' {
-  import type { Middleware } from 'waku/config';
-  const default_: ReturnType<Middleware>[];
-  export default default_;
+  export const middlewares: import('../config.ts').Middleware[];
+}
+
+declare module 'virtual:vite-rsc-waku/hono-enhancer' {
+  export const honoEnhancer: import('../cli.ts').HonoEnhancer;
 }
