@@ -58,6 +58,7 @@ export default function wakuPlugin(
   const wakuFlags: Record<string, unknown> = wakuPluginOptions?.flags ?? {};
 
   return [
+    ...(wakuConfig.vite?.plugins ?? []),
     react(),
     wakuAllowServerPlugin(), // apply `allowServer` DCE before "use client" transform
     rsc({
@@ -439,7 +440,6 @@ export default function wakuPlugin(
       },
     },
     !!wakuFlags['with-vercel'] && wakuDeployVercelPlugin(),
-    ...(wakuConfig.vite?.plugins ?? []),
   ];
 }
 
