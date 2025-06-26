@@ -86,8 +86,7 @@ if (values.version) {
   ['dev', 'build', 'start'].includes(cmd)
 ) {
   const { cli } = await import('./vite-rsc/cli.js');
-  process.env.WAKU_VITE_RSC_FLAGS = JSON.stringify(values);
-  await cli({ cmd, port: values.port });
+  await cli(cmd, values);
 } else {
   switch (cmd) {
     case 'dev':

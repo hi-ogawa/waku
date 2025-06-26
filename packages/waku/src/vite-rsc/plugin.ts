@@ -1,7 +1,6 @@
 import {
   mergeConfig,
   normalizePath,
-  runnerImport,
   type EnvironmentOptions,
   type Plugin,
   type PluginOption,
@@ -22,24 +21,48 @@ import {
 } from '../lib/plugins/vite-plugin-rsc-managed.js';
 import { wakuDeployVercelPlugin } from './deploy/vercel/plugin.js';
 import { wakuAllowServerPlugin } from './plugins/allow-server.js';
+import { DIST_PUBLIC } from '../lib/builder/constants.js';
 
 // TODO: refactor and reuse common plugins from lib/plugins
 
 const PKG_NAME = 'waku';
 
-export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
-  let wakuConfig: Config | undefined;
-  let wakuFlags: Record<string, unknown> = {};
-  // for now passed through main cli
-  if (process.env.WAKU_VITE_RSC_FLAGS) {
-    try {
-      wakuFlags = JSON.parse(process.env.WAKU_VITE_RSC_FLAGS);
-    } catch (e) {
-      console.error('[failed to load cli flags]', e);
-    }
-  }
+export type WakuPluginOptions = {
+  flags?: WakuFlags | undefined;
+  config?: Config | undefined;
+};
+
+type WakuFlags = {
+  'experimental-compress'?: boolean | undefined;
+  'experimental-partial'?: boolean | undefined;
+  'with-vercel'?: boolean | undefined;
+};
+
+export default function wakuPlugin(
+  wakuPluginOptions?: WakuPluginOptions,
+): PluginOption {
+  const wakuConfig: Required<Config> = {
+    basePath: '/',
+    srcDir: 'src',
+    distDir: 'dist',
+    pagesDir: 'pages',
+    apiDir: 'api',
+    privateDir: 'private', // TODO?
+    rscBase: 'RSC',
+    middleware: [
+      'waku/middleware/context',
+      'waku/middleware/dev-server',
+      'waku/middleware/handler',
+    ],
+    unstable_honoEnhancer: undefined,
+    unstable_viteConfigs: undefined,
+    vite: undefined,
+    ...wakuPluginOptions?.config,
+  };
+  const wakuFlags: Record<string, unknown> = wakuPluginOptions?.flags ?? {};
 
   return [
+    ...(wakuConfig.vite?.plugins ?? []),
     react(),
     wakuAllowServerPlugin(), // apply `allowServer` DCE before "use client" transform
     rsc({
@@ -56,26 +79,6 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
     {
       name: 'rsc:waku',
       async config(_config, env) {
-        if (!env.isPreview) {
-          try {
-            const imported = await runnerImport<{ default: Config }>(
-              '/waku.config',
-            );
-            wakuConfig = imported.module.default;
-          } catch (e) {
-            // ignore errors when waku.config doesn't exist
-            if (
-              !(
-                e instanceof Error &&
-                e.message ===
-                  'Failed to load url /waku.config (resolved id: /waku.config). Does the file exist?'
-              )
-            ) {
-              console.error(e);
-            }
-          }
-        }
-
         const toEnvironmentOption = (entry: string) =>
           ({
             build: {
@@ -89,8 +92,12 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
 
         let viteRscConfig: UserConfig = {
           define: {
-            'import.meta.env.WAKU_CONFIG_BASE_PATH': JSON.stringify('/'),
-            'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify('RSC'),
+            'import.meta.env.WAKU_CONFIG_BASE_PATH': JSON.stringify(
+              wakuConfig.basePath,
+            ),
+            'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify(
+              wakuConfig.rscBase,
+            ),
           },
           environments: {
             client: toEnvironmentOption('entry.browser'),
@@ -99,6 +106,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
           },
         };
 
+        // backcompat for old vite config overrides
         // TODO: adding `plugins` here is not supported.
         viteRscConfig = mergeConfig(
           viteRscConfig,
@@ -115,6 +123,14 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
             wakuConfig?.unstable_viteConfigs?.['build-server']?.() ?? {},
           );
         }
+
+        if (wakuConfig.vite) {
+          viteRscConfig = mergeConfig(viteRscConfig, {
+            ...wakuConfig.vite,
+            plugins: undefined,
+          });
+        }
+
         return viteRscConfig;
       },
       configEnvironment(name, config, _env) {
@@ -131,9 +147,10 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
           );
         }
 
+        config.build ??= {};
+        config.build.outDir = `${wakuConfig.distDir}/${name}`;
         if (name === 'client') {
-          config.build ??= {};
-          config.build.outDir = 'dist/public';
+          config.build.outDir = `${wakuConfig.distDir}/${DIST_PUBLIC}`;
           if (wakuFlags['experimental-partial']) {
             config.build.emptyOutDir = false;
           }
@@ -156,7 +173,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
         };
       },
       async configurePreviewServer(server) {
-        // server ssg html
+        // serve ssg html
         // TODO: integrate hono
         const outDir = server.config.environments.client!.build.outDir;
         server.middlewares.use((req, _res, next) => {
@@ -171,11 +188,11 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
     },
     {
       name: 'rsc:waku:user-entries',
-      // resolve user entries or fallbacks to "managed mode"
+      // resolve user entries and fallbacks to "managed mode" if not found.
       async resolveId(source, _importer, options) {
         if (source === 'virtual:vite-rsc-waku/server-entry') {
           const resolved = await this.resolve(
-            '/src/server-entry',
+            `/${wakuConfig.srcDir}/server-entry`,
             undefined,
             options,
           );
@@ -183,7 +200,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
         }
         if (source === 'virtual:vite-rsc-waku/client-entry') {
           const resolved = await this.resolve(
-            '/src/client-entry',
+            `/${wakuConfig.srcDir}/client-entry`,
             undefined,
             options,
           );
@@ -193,11 +210,14 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
       load(id) {
         if (id === '\0virtual:vite-rsc-waku/server-entry') {
           return getManagedEntries(
-            path.join(this.environment.config.root, 'src/server-entry.js'),
+            path.join(
+              this.environment.config.root,
+              `${wakuConfig.srcDir}/server-entry.js`,
+            ),
             'src',
             {
-              pagesDir: 'pages',
-              apiDir: 'api',
+              pagesDir: wakuConfig.pagesDir,
+              apiDir: wakuConfig.apiDir,
             },
           );
         }
@@ -208,14 +228,10 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
     },
     createVirtualPlugin('vite-rsc-waku/middlewares', async function () {
       // minor tweak on middleware convention
-      // TODO: discuss
-      const configMiddlware = wakuConfig?.middleware ?? [
-        'waku/middleware/handler',
-      ];
       const pre: string[] = [];
       const post: string[] = [];
       const builtins: string[] = [];
-      for (const file of configMiddlware) {
+      for (const file of wakuConfig.middleware) {
         if (file.startsWith('waku/')) {
           builtins.push(file);
           continue;
@@ -409,12 +425,17 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
             if (buildConfig.type === 'file') {
               emitStaticFile(
                 config.root,
-                { distDir: 'dist' },
+                { distDir: wakuConfig.distDir },
                 buildConfig.pathname,
                 buildConfig.body,
               );
             } else {
-              console.warn('[waku:vite-rsc] ignored build task:', buildConfig);
+              // eslint-disable-next-line
+              0 &&
+                console.warn(
+                  '[waku:vite-rsc] ignored build task:',
+                  buildConfig,
+                );
             }
           }
           await waitForTasks();
@@ -447,7 +468,7 @@ function createVirtualPlugin(name: string, load: Plugin['load']) {
     },
     load(id, options) {
       if (id === '\0' + name) {
-        return (load as Function).apply(this, [id, options]);
+        return (load as any).apply(this, [id, options]);
       }
     },
   } satisfies Plugin;

@@ -1,4 +1,4 @@
-import type { Plugin } from 'vite';
+import { normalizePath, type Plugin } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -27,7 +27,11 @@ export function wakuDeployVercelPlugin(): Plugin {
         if (this.environment.name !== 'ssr') {
           return;
         }
-        await buildVercel();
+        const config = this.environment.getTopLevelConfig();
+        await buildVercel({
+          clientDir: config.environments.client!.build.outDir,
+          serverDir: config.environments.rsc!.build.outDir,
+        });
       },
     },
   };
@@ -35,9 +39,8 @@ export function wakuDeployVercelPlugin(): Plugin {
 
 // copied from my own adapter for now
 // https://github.com/hi-ogawa/rsc-movies/blob/8e350bf8328b67e94cffe95abd6a01881ecd937d/vite.config.ts#L48
-async function buildVercel() {
+async function buildVercel(options: { clientDir: string; serverDir: string }) {
   const adapterDir = './.vercel/output';
-  const clientDir = './dist/public';
   fs.rmSync(adapterDir, { recursive: true, force: true });
   fs.mkdirSync(adapterDir, { recursive: true });
   fs.writeFileSync(
@@ -70,12 +73,13 @@ async function buildVercel() {
 
   // static
   fs.mkdirSync(path.join(adapterDir, 'static'), { recursive: true });
-  fs.cpSync(clientDir, path.join(adapterDir, 'static'), {
+  fs.cpSync(options.clientDir, path.join(adapterDir, 'static'), {
     recursive: true,
   });
 
   // function config
   const functionDir = path.join(adapterDir, 'functions/index.func');
+  const serverEntry = path.join(options.serverDir, 'vercel.js');
   fs.mkdirSync(functionDir, {
     recursive: true,
   });
@@ -84,7 +88,7 @@ async function buildVercel() {
     JSON.stringify(
       {
         runtime: 'nodejs22.x',
-        handler: 'dist/rsc/vercel.js',
+        handler: normalizePath(path.relative(process.cwd(), serverEntry)),
         launcherType: 'Nodejs',
       },
       null,
@@ -94,7 +98,6 @@ async function buildVercel() {
 
   // copy server entry and dependencies
   const { nodeFileTrace } = await import('@vercel/nft');
-  const serverEntry = path.join(clientDir, '../rsc/vercel.js');
   const result = await nodeFileTrace([serverEntry]);
   for (const file of result.fileList) {
     const dest = path.join(functionDir, file);
