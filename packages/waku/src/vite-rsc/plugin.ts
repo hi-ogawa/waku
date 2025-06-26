@@ -121,8 +121,10 @@ export default function wakuPlugin(
         }
 
         if (wakuConfig.vite) {
-          const { plugins, ...rest } = wakuConfig.vite ?? {};
-          viteRscConfig = mergeConfig(viteRscConfig, rest);
+          viteRscConfig = mergeConfig(viteRscConfig, {
+            ...wakuConfig.vite,
+            plugins: undefined,
+          });
         }
 
         return viteRscConfig;
@@ -457,7 +459,7 @@ function createVirtualPlugin(name: string, load: Plugin['load']) {
     },
     load(id, options) {
       if (id === '\0' + name) {
-        return (load as Function).apply(this, [id, options]);
+        return (load as any).apply(this, [id, options]);
       }
     },
   } satisfies Plugin;
