@@ -7,14 +7,96 @@ import {
   decodeRscPath,
   encodeRscPath,
 } from '../lib/renderers/utils.js';
-import type { HandlerReq, HandlerRes } from '../lib/types.js';
 import { stringToStream } from '../lib/utils/stream.js';
 import { INTERNAL_setAllEnv } from '../server.js';
 import { joinPath } from '../lib/utils/path.js';
 import { runWithContext } from '../lib/middleware/context.js';
 import { getErrorInfo } from '../lib/utils/custom-errors.js';
+import type {
+  HandlerContext,
+  Middleware,
+  MiddlewareOptions,
+} from '../lib/middleware/types.js';
 
-// TODO: refactor common logic from packages/waku/src/lib/middleware/handler.ts
+//
+// server handler entry point
+//
+
+export default async function handler(request: Request): Promise<Response> {
+  INTERNAL_setAllEnv(process.env as any);
+
+  const ctx: HandlerContext = {
+    req: {
+      body: request.body,
+      url: new URL(request.url),
+      method: request.method,
+      headers: Object.fromEntries(request.headers.entries()),
+    },
+    res: {},
+    data: {},
+  };
+
+  // TODO: nest async calls
+  const middlewares = await loadMiddlewares();
+  for (const middleware of middlewares) {
+    let next = false;
+    await middleware(ctx, async () => {
+      next = true;
+    });
+    if (!next) {
+      return new Response(ctx.res.body, {
+        status: ctx.res.status ?? 200,
+        headers: ctx.res.headers as any,
+      });
+    }
+  }
+
+  await handleRequest(request, ctx);
+
+  if (ctx.res.body || ctx.res.status) {
+    return new Response(ctx.res.body || '', {
+      status: ctx.res.status ?? 200,
+      headers: ctx.res.headers as any,
+    });
+  }
+
+  return new Response('404 Not Found', { status: 404 });
+}
+
+let loadedMiddlewares_: ReturnType<Middleware>[] | undefined;
+
+async function loadMiddlewares() {
+  if (!loadedMiddlewares_) {
+    const { middlewares } = await import('virtual:vite-rsc-waku/middlewares');
+    // TODO: check if this is essential
+    let middlwareOptions: MiddlewareOptions;
+    if (import.meta.env.DEV) {
+      middlwareOptions = {
+        cmd: 'dev',
+        env: {},
+        unstable_onError: new Set(),
+        get config(): any {
+          throw new Error('unsupported');
+        },
+      };
+    } else {
+      middlwareOptions = {
+        cmd: 'start',
+        env: {},
+        unstable_onError: new Set(),
+        get loadEntries(): any {
+          throw new Error('unsupported');
+        },
+      };
+    }
+    loadedMiddlewares_ = middlewares.map((m) => m(middlwareOptions));
+  }
+  return loadedMiddlewares_;
+}
+
+//
+// Core RSC integration
+//
 
 export type RscElementsPayload = Record<string, unknown>;
 export type RscHtmlPayload = React.ReactNode;
@@ -90,40 +172,14 @@ function createImplementation({
   };
 }
 
-// cf. packages/waku/src/lib/middleware/handler.ts `handler`
-export default async function handler(request: Request): Promise<Response> {
+async function handleRequest(request: Request, ctx: HandlerContext) {
   await import('virtual:vite-rsc-waku/set-platform-data');
 
-  INTERNAL_setAllEnv(process.env as any);
   const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
     .default;
 
-  const url = new URL(request.url);
-  const req: HandlerReq = {
-    body: request.body,
-    url,
-    method: request.method,
-    headers: Object.fromEntries(request.headers.entries()),
-  };
-  const res: HandlerRes = {};
-  const contextData: Record<string, unknown> = {};
-
-  const middlewares = (await import('virtual:vite-rsc-waku/middlewares'))
-    .default;
-  for (const middleware of middlewares) {
-    let next = false;
-    await middleware({ req, res, data: contextData }, async () => {
-      next = true;
-    });
-    if (!next) {
-      return new Response(res.body, {
-        status: res.status ?? 400,
-        headers: res.headers as any,
-      });
-    }
-  }
-
   // cf. packages/waku/src/lib/middleware/handler.ts `getInput`
+  const url = ctx.req.url;
   const rscPathPrefix =
     import.meta.env.WAKU_CONFIG_BASE_PATH +
     import.meta.env.WAKU_CONFIG_RSC_BASE +
@@ -149,7 +205,7 @@ export default async function handler(request: Request): Promise<Response> {
         type: 'function',
         fn: action as any,
         args,
-        req,
+        req: ctx.req,
       };
     } else {
       // client RSC request
@@ -167,7 +223,7 @@ export default async function handler(request: Request): Promise<Response> {
         type: 'component',
         rscPath,
         rscParams,
-        req,
+        req: ctx.req,
       };
     }
   } else if (request.method === 'POST') {
@@ -187,14 +243,14 @@ export default async function handler(request: Request): Promise<Response> {
           return await ReactServer.decodeFormState(result, formData);
         },
         pathname: decodeURI(url.pathname),
-        req,
+        req: ctx.req,
       };
     } else {
       // POST API request
       wakuInput = {
         type: 'custom',
         pathname: decodeURI(url.pathname),
-        req,
+        req: ctx.req,
       };
     }
   } else {
@@ -202,7 +258,7 @@ export default async function handler(request: Request): Promise<Response> {
     wakuInput = {
       type: 'custom',
       pathname: decodeURI(url.pathname),
-      req,
+      req: ctx.req,
     };
   }
 
@@ -213,53 +269,41 @@ export default async function handler(request: Request): Promise<Response> {
 
   let wakuResult: HandleRequestOutput;
   try {
-    wakuResult = await runWithContext({ req, data: contextData }, () =>
+    wakuResult = await runWithContext(ctx, () =>
       wakuServerEntry.handleRequest(wakuInput, implementation),
     );
   } catch (e) {
     const info = getErrorInfo(e);
-    res.status = info?.status || 500;
-    res.body = stringToStream(
+    ctx.res.status = info?.status || 500;
+    ctx.res.body = stringToStream(
       (e as { message?: string } | undefined)?.message || String(e),
     );
     if (info?.location) {
-      (res.headers ||= {}).location = info.location;
+      (ctx.res.headers ||= {}).location = info.location;
     }
   }
 
   if (wakuResult instanceof ReadableStream) {
-    res.body = wakuResult;
+    ctx.res.body = wakuResult;
   } else if (wakuResult) {
     if (wakuResult.body) {
-      res.body = wakuResult.body;
+      ctx.res.body = wakuResult.body;
     }
     if (wakuResult.status) {
-      res.status = wakuResult.status;
+      ctx.res.status = wakuResult.status;
     }
     if (wakuResult.headers) {
-      Object.assign((res.headers ||= {}), wakuResult.headers);
+      Object.assign((ctx.res.headers ||= {}), wakuResult.headers);
     }
   }
-  if (res.body || res.status) {
-    return new Response(res.body || '', {
-      status: res.status || 200,
-      headers: res.headers as any,
-    });
-  }
 
-  if (url.pathname === '/') {
+  if (!(ctx.res.body || ctx.res.status) && url.pathname === '/') {
     const ssrEntryModule = await import.meta.viteRsc.loadModule<
       typeof import('./entry.ssr.tsx')
     >('ssr', 'index');
     const htmlFallbackStream = await ssrEntryModule.renderHtmlFallback();
-    return new Response(htmlFallbackStream, {
-      headers: {
-        'content-type': 'text/html;charset=utf-8',
-      },
-    });
+    ctx.res.body = htmlFallbackStream;
   }
-
-  return new Response('404 Not Found', { status: 404 });
 }
 
 export async function handleBuild() {

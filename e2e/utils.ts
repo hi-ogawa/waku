@@ -173,6 +173,10 @@ export const prepareNormalSetup = (fixtureName: string) => {
 };
 
 export const prepareStandaloneSetup = (fixtureName: string) => {
+  if (process.env.TEST_FORCE_NORMAL_SETUP) {
+    return prepareNormalSetup(fixtureName) as any;
+  }
+
   const wakuDir = fileURLToPath(new URL('../packages/waku', import.meta.url));
   const { version } = createRequire(import.meta.url)(
     join(wakuDir, 'package.json'),
