@@ -1,58 +1,65 @@
-import { spawn } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import fs from 'node:fs';
-import { createRequire } from 'node:module';
-import path from 'node:path';
-import process from 'node:process';
+import * as vite from 'vite';
+import waku, { type WakuPluginOptions } from './plugin.js';
+import type { Config } from '../config.js';
 
-const require = createRequire(import.meta.url);
+export async function cli(cmd: string, flags: Record<string, any>) {
+  // set NODE_ENV before runnerImport https://github.com/vitejs/vite/issues/20299
+  process.env.NODE_ENV ??= cmd === 'dev' ? 'development' : 'production';
 
-export async function cli(options: { cmd: string; port: string | undefined }) {
-  let configFile: string | undefined;
-
-  if (fs.existsSync('waku-vite-rsc.config.ts')) {
-    // allow a dedicated config file for Vite RSC port
-    configFile = 'waku-vite-rsc.config.ts';
-  } else if (!fs.existsSync('vite.config.ts')) {
-    // auto setup vite.config.ts in a hidden place
-    const configCode = `\
-import waku from "waku/vite-rsc/plugin";
-
-export default {
-  plugins: [waku()],
-};
-`;
-    configFile = `node_modules/.cache/waku/vite-vite-rsc.config.${hashString(configCode)}.ts`;
-    if (!fs.existsSync(configFile)) {
-      fs.mkdirSync(path.dirname(configFile), { recursive: true });
-      fs.writeFileSync(configFile, configCode);
+  let wakuConfig: Config | undefined;
+  try {
+    const imported = await vite.runnerImport<{ default: Config }>(
+      '/waku.config',
+    );
+    wakuConfig = imported.module.default;
+  } catch (e) {
+    // ignore errors when waku.config doesn't exist
+    if (
+      !(
+        e instanceof Error &&
+        e.message ===
+          'Failed to load url /waku.config (resolved id: /waku.config). Does the file exist?'
+      )
+    ) {
+      throw e;
     }
   }
 
-  // spawn vite
-  const viteBin = path.join(
-    require.resolve('vite/package.json'),
-    '../bin/vite.js',
-  );
-  const proc = spawn(
-    'node',
-    [
-      viteBin,
-      options.cmd === 'start' ? 'preview' : options.cmd,
-      ...(options.cmd == 'dev' ? ['--port', options.port || '3000'] : []),
-      ...(options.cmd == 'start' ? ['--port', options.port || '8080'] : []),
-      ...(configFile ? ['-c', configFile] : []),
-    ],
-    {
-      shell: false,
-      stdio: 'inherit',
-    },
-  );
-  proc.on('close', (code) => {
-    process.exitCode = code ?? 1;
-  });
-}
+  const wakuPluginOptions: WakuPluginOptions = {
+    flags,
+    config: wakuConfig,
+  };
 
-function hashString(v: string) {
-  return createHash('sha256').update(v).digest().toString('hex').slice(0, 10);
+  if (cmd === 'dev') {
+    const server = await vite.createServer({
+      configFile: false,
+      plugins: [waku(wakuPluginOptions)],
+      server: {
+        port: parseInt(flags.port || '3000', 10),
+      },
+    });
+    await server.listen();
+    server.printUrls();
+    server.bindCLIShortcuts();
+  }
+
+  if (cmd === 'build') {
+    const builder = await vite.createBuilder({
+      configFile: false,
+      plugins: [waku(wakuPluginOptions)],
+    });
+    await builder.buildApp();
+  }
+
+  if (cmd === 'start') {
+    const server = await vite.preview({
+      configFile: false,
+      plugins: [waku(wakuPluginOptions)],
+      preview: {
+        port: parseInt(flags.port || '8080', 10),
+      },
+    });
+    server.printUrls();
+    server.bindCLIShortcuts();
+  }
 }
