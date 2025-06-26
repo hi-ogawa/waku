@@ -3,6 +3,7 @@ import waku, { type WakuPluginOptions } from './plugin.js';
 import type { Config } from '../config.js';
 
 export async function cli(cmd: string, flags: Record<string, any>) {
+  // set NODE_ENV before runnerImport https://github.com/vitejs/vite/issues/20299
   process.env.NODE_ENV ??= cmd === 'dev' ? 'development' : 'production';
 
   let wakuConfig: Config | undefined;
