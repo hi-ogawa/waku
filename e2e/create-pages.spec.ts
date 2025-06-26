@@ -72,7 +72,6 @@ test.describe(`create-pages`, () => {
   });
 
   test("nested/cat's pajamas", async ({ page }) => {
-    test.skip(!!process.env.TEST_VITE_RSC);
     await page.goto(`http://localhost:${port}/nested/cat's%20pajamas`);
     await expect(
       page.getByRole('heading', { name: "Dynamic: cat's%20pajamas" }),
