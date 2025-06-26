@@ -51,7 +51,7 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
 
-  await handleRequest(request, ctx);
+  await runWithContext(ctx, () => handleRequest(request, ctx));
 
   if (ctx.res.body || ctx.res.status) {
     return new Response(ctx.res.body || '', {
@@ -267,11 +267,9 @@ async function handleRequest(request: Request, ctx: HandlerContext) {
     debugNojs: url.searchParams.has('__nojs'),
   });
 
-  let wakuResult: HandleRequestOutput;
+  let res: HandleRequestOutput;
   try {
-    wakuResult = await runWithContext(ctx, () =>
-      wakuServerEntry.handleRequest(wakuInput, implementation),
-    );
+    res = await wakuServerEntry.handleRequest(wakuInput, implementation);
   } catch (e) {
     const info = getErrorInfo(e);
     ctx.res.status = info?.status || 500;
@@ -283,17 +281,17 @@ async function handleRequest(request: Request, ctx: HandlerContext) {
     }
   }
 
-  if (wakuResult instanceof ReadableStream) {
-    ctx.res.body = wakuResult;
-  } else if (wakuResult) {
-    if (wakuResult.body) {
-      ctx.res.body = wakuResult.body;
+  if (res instanceof ReadableStream) {
+    ctx.res.body = res;
+  } else if (res) {
+    if (res.body) {
+      ctx.res.body = res.body;
     }
-    if (wakuResult.status) {
-      ctx.res.status = wakuResult.status;
+    if (res.status) {
+      ctx.res.status = res.status;
     }
-    if (wakuResult.headers) {
-      Object.assign((ctx.res.headers ||= {}), wakuResult.headers);
+    if (res.headers) {
+      Object.assign((ctx.res.headers ||= {}), res.headers);
     }
   }
 
@@ -303,6 +301,7 @@ async function handleRequest(request: Request, ctx: HandlerContext) {
     >('ssr', 'index');
     const htmlFallbackStream = await ssrEntryModule.renderHtmlFallback();
     ctx.res.body = htmlFallbackStream;
+    ctx.res.headers = { 'content-type': 'text/html;charset=utf-8' };
   }
 }
 
