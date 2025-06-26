@@ -97,12 +97,14 @@ export default function wakuPlugin(
             'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify(
               wakuConfig.rscBase,
             ),
-            'import.meta.env.WAKU_DEPLOY_SERVE_STATIC': JSON.stringify(true),
+            'import.meta.env.WAKU_SERVE_STATIC': JSON.stringify(
+              env.command === 'build',
+            ),
           },
           environments: {
             client: toEnvironmentOption('entry.browser'),
             ssr: toEnvironmentOption('entry.ssr'),
-            rsc: toEnvironmentOption('entry.rsc.default'),
+            rsc: toEnvironmentOption('entry.rsc.node'),
           },
         };
 

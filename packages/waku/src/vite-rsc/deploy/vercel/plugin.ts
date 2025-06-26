@@ -8,7 +8,7 @@ export function wakuDeployVercelPlugin(): Plugin {
     config() {
       return {
         define: {
-          'import.meta.env.WAKU_DEPLOY_SERVE_STATIC': JSON.stringify(false),
+          'import.meta.env.WAKU_SERVE_STATIC': JSON.stringify(false),
         },
         environments: {
           rsc: {
