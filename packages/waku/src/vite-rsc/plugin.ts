@@ -21,6 +21,7 @@ import {
 } from '../lib/plugins/vite-plugin-rsc-managed.js';
 import { wakuDeployVercelPlugin } from './deploy/vercel/plugin.js';
 import { wakuAllowServerPlugin } from './plugins/allow-server.js';
+import { resolveConfigDev } from '../lib/config.js';
 
 // TODO: refactor and reuse common plugins from lib/plugins
 
@@ -41,7 +42,6 @@ export default function wakuPlugin(
   wakuPluginOptions?: WakuPluginOptions,
 ): PluginOption {
   const wakuConfig = {
-    ...wakuPluginOptions?.config,
     basePath: '/',
     srcDir: 'src',
     distDir: 'dist',
@@ -54,6 +54,7 @@ export default function wakuPlugin(
       'waku/middleware/dev-server',
       'waku/middleware/handler',
     ],
+    ...wakuPluginOptions?.config,
   } satisfies Config;
   const wakuFlags: Record<string, unknown> = wakuPluginOptions?.flags ?? {};
 
