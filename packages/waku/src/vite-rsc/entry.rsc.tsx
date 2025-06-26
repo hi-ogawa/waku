@@ -51,7 +51,7 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
 
-  await runWithContext(ctx, () => handleRequest(request, ctx));
+  await runWithContext(ctx, () => handleRequest(ctx));
 
   if (ctx.res.body || ctx.res.status) {
     return new Response(ctx.res.body || '', {
@@ -167,7 +167,17 @@ function createRenderUtils({
   };
 }
 
-async function handleRequest(request: Request, ctx: HandlerContext) {
+function toRequest(ctx: HandlerContext) {
+  return new Request(ctx.req.url, {
+    method: ctx.req.method,
+    headers: ctx.req.headers,
+    body: ctx.req.body,
+    // @ts-ignore undici compat
+    duplex: 'half',
+  });
+}
+
+async function handleRequest(ctx: HandlerContext) {
   await import('virtual:vite-rsc-waku/set-platform-data');
 
   const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
@@ -189,10 +199,10 @@ async function handleRequest(request: Request, ctx: HandlerContext) {
     // server action: js
     const actionId = decodeFuncId(rscPath);
     if (actionId) {
-      const contentType = request.headers.get('content-type');
+      const contentType = ctx.req.headers['content-type'];
       const body = contentType?.startsWith('multipart/form-data')
-        ? await request.formData()
-        : await request.text();
+        ? await toRequest(ctx).formData()
+        : await toRequest(ctx).text();
       temporaryReferences = ReactServer.createTemporaryReferenceSet();
       const args = await ReactServer.decodeReply(body, { temporaryReferences });
       const action = await ReactServer.loadServerAction(actionId);
@@ -205,11 +215,11 @@ async function handleRequest(request: Request, ctx: HandlerContext) {
     } else {
       // client RSC request
       let rscParams: unknown = url.searchParams;
-      if (request.body) {
-        const contentType = request.headers.get('content-type');
+      if (ctx.req.body) {
+        const contentType = ctx.req.headers['content-type'];
         const body = contentType?.startsWith('multipart/form-data')
-          ? await request.formData()
-          : await request.text();
+          ? await toRequest(ctx).formData()
+          : await toRequest(ctx).text();
         rscParams = await ReactServer.decodeReply(body, {
           temporaryReferences,
         });
@@ -221,15 +231,15 @@ async function handleRequest(request: Request, ctx: HandlerContext) {
         req: ctx.req,
       };
     }
-  } else if (request.method === 'POST') {
+  } else if (ctx.req.method === 'POST') {
     // cf. packages/waku/src/lib/renderers/rsc.ts `decodePostAction`
-    const contentType = request.headers.get('content-type');
+    const contentType = ctx.req.headers['content-type'];
     if (
       typeof contentType === 'string' &&
       contentType.startsWith('multipart/form-data')
     ) {
       // server action: no js (progressive enhancement)
-      const formData = await request.formData();
+      const formData = await toRequest(ctx).formData();
       const decodedAction = await ReactServer.decodeAction(formData);
       wakuInput = {
         type: 'action',
@@ -289,6 +299,7 @@ async function handleRequest(request: Request, ctx: HandlerContext) {
     }
   }
 
+  // TODO: remove url.pathname === '/'
   if (!(ctx.res.body || ctx.res.status) && url.pathname === '/') {
     const ssrEntryModule = await import.meta.viteRsc.loadModule<
       typeof import('./entry.ssr.tsx')
