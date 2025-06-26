@@ -24,8 +24,6 @@ import { wakuAllowServerPlugin } from './plugins/allow-server.js';
 import { DIST_PUBLIC } from '../lib/builder/constants.js';
 import { fsRouterTypegenPlugin } from '../lib/plugins/vite-plugin-fs-router-typegen.js';
 
-// TODO: refactor and reuse common plugins from lib/plugins
-
 const PKG_NAME = 'waku';
 
 export type WakuPluginOptions = {
@@ -33,7 +31,7 @@ export type WakuPluginOptions = {
   config?: Config | undefined;
 };
 
-type WakuFlags = {
+export type WakuFlags = {
   'experimental-compress'?: boolean | undefined;
   'experimental-partial'?: boolean | undefined;
   'with-vercel'?: boolean | undefined;
@@ -103,7 +101,7 @@ export default function wakuPlugin(
           environments: {
             client: toEnvironmentOption('entry.browser'),
             ssr: toEnvironmentOption('entry.ssr'),
-            rsc: toEnvironmentOption('entry.rsc'),
+            rsc: toEnvironmentOption('entry.rsc.default'),
           },
         };
 
@@ -173,19 +171,19 @@ export default function wakuPlugin(
           },
         };
       },
-      async configurePreviewServer(server) {
-        // serve ssg html
-        // TODO: integrate hono
-        const outDir = server.config.environments.client!.build.outDir;
-        server.middlewares.use((req, _res, next) => {
-          const url = new URL(req.url!, 'https://test.local');
-          const htmlFile = url.pathname + '/index.html';
-          if (fs.existsSync(path.join(outDir, htmlFile))) {
-            req.url = htmlFile;
-          }
-          next();
-        });
-      },
+      // async configurePreviewServer(server) {
+      //   // serve ssg html
+      //   // TODO: integrate hono
+      //   const outDir = server.config.environments.client!.build.outDir;
+      //   server.middlewares.use((req, _res, next) => {
+      //     const url = new URL(req.url!, 'https://test.local');
+      //     const htmlFile = url.pathname + '/index.html';
+      //     if (fs.existsSync(path.join(outDir, htmlFile))) {
+      //       req.url = htmlFile;
+      //     }
+      //     next();
+      //   });
+      // },
     },
     {
       name: 'rsc:waku:user-entries',
@@ -286,6 +284,12 @@ export default function wakuPlugin(
       return `
         import __m from ${JSON.stringify(id)};
         export const honoEnhancer = __m;
+      `;
+    }),
+    createVirtualPlugin('vite-rsc-waku/config', async function () {
+      return `
+        export const config = ${JSON.stringify({ ...wakuConfig, vite: undefined })};
+        export const flags = ${JSON.stringify(wakuFlags)};
       `;
     }),
     {

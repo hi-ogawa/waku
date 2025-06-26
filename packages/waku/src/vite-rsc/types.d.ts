@@ -21,3 +21,8 @@ declare module 'virtual:vite-rsc-waku/middlewares' {
 declare module 'virtual:vite-rsc-waku/hono-enhancer' {
   export const honoEnhancer: import('../cli.ts').HonoEnhancer;
 }
+
+declare module 'virtual:vite-rsc-waku/config' {
+  export const flags: import('./plugin.ts').WakuFlags;
+  export const config: Required<import('../config.ts').Config>;
+}
