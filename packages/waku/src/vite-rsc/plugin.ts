@@ -21,7 +21,6 @@ import {
 } from '../lib/plugins/vite-plugin-rsc-managed.js';
 import { wakuDeployVercelPlugin } from './deploy/vercel/plugin.js';
 import { wakuAllowServerPlugin } from './plugins/allow-server.js';
-import { resolveConfigDev } from '../lib/config.js';
 
 // TODO: refactor and reuse common plugins from lib/plugins
 
