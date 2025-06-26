@@ -33,7 +33,9 @@ export default async function handler(request: Request): Promise<Response> {
       headers: Object.fromEntries(request.headers.entries()),
     },
     res: {},
-    data: {},
+    data: {
+      __vite_rsc_request: request,
+    },
   };
 
   // TODO: nest async calls
@@ -167,16 +169,6 @@ function createRenderUtils({
   };
 }
 
-function toRequest(ctx: HandlerContext) {
-  return new Request(ctx.req.url, {
-    method: ctx.req.method,
-    headers: ctx.req.headers,
-    body: ctx.req.body,
-    // @ts-ignore undici compat
-    duplex: 'half',
-  });
-}
-
 async function handleRequest(ctx: HandlerContext) {
   await import('virtual:vite-rsc-waku/set-platform-data');
 
@@ -192,6 +184,7 @@ async function handleRequest(ctx: HandlerContext) {
   let rscPath: string | undefined;
   let temporaryReferences: unknown | undefined;
   let wakuInput: HandleRequestInput;
+  const request = ctx.data.__vite_rsc_request as Request;
   if (url.pathname.startsWith(rscPathPrefix)) {
     rscPath = decodeRscPath(
       decodeURI(url.pathname.slice(rscPathPrefix.length)),
@@ -201,8 +194,8 @@ async function handleRequest(ctx: HandlerContext) {
     if (actionId) {
       const contentType = ctx.req.headers['content-type'];
       const body = contentType?.startsWith('multipart/form-data')
-        ? await toRequest(ctx).formData()
-        : await toRequest(ctx).text();
+        ? await request.formData()
+        : await request.text();
       temporaryReferences = ReactServer.createTemporaryReferenceSet();
       const args = await ReactServer.decodeReply(body, { temporaryReferences });
       const action = await ReactServer.loadServerAction(actionId);
@@ -218,8 +211,8 @@ async function handleRequest(ctx: HandlerContext) {
       if (ctx.req.body) {
         const contentType = ctx.req.headers['content-type'];
         const body = contentType?.startsWith('multipart/form-data')
-          ? await toRequest(ctx).formData()
-          : await toRequest(ctx).text();
+          ? await request.formData()
+          : await request.text();
         rscParams = await ReactServer.decodeReply(body, {
           temporaryReferences,
         });
@@ -239,7 +232,7 @@ async function handleRequest(ctx: HandlerContext) {
       contentType.startsWith('multipart/form-data')
     ) {
       // server action: no js (progressive enhancement)
-      const formData = await toRequest(ctx).formData();
+      const formData = await request.formData();
       const decodedAction = await ReactServer.decodeAction(formData);
       wakuInput = {
         type: 'action',

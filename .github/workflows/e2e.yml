@@ -138,21 +138,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # os: [ubuntu-latest]
-        # version: [22.7.0]
         shared: [1, 2, 3, 4]
         shardTotal: [4]
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        version: [24.0.0, 22.12.0, 20.19.0]
-        exclude:
-          - os: macos-latest
-            version: 20.19.0
-          - os: windows-latest
-            version: 20.19.0
-          - os: macos-latest
-            version: 22.12.0
-          - os: windows-latest
-            version: 22.12.0
+        os: [ubuntu-latest]
+        version: [22.7.0]
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        # version: [24.0.0, 22.12.0, 20.19.0]
+        # exclude:
+        #   - os: macos-latest
+        #     version: 20.19.0
+        #   - os: windows-latest
+        #     version: 20.19.0
+        #   - os: macos-latest
+        #     version: 22.12.0
+        #   - os: windows-latest
+        #     version: 22.12.0
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -173,10 +173,10 @@ jobs:
       # - name: Install Playwright
       #   id: install-playwright
         # uses: ./.github/actions/playwright
-      - run: |
-          pnpm exec playwright test --shard=${{ matrix.shared }}/${{ matrix.shardTotal }}
       # - run: |
-      #     pnpm exec playwright test --shard=${{ matrix.shared }}/${{ matrix.shardTotal }} --project=chromium-dev --project=chromium-prd
+      #     pnpm exec playwright test --shard=${{ matrix.shared }}/${{ matrix.shardTotal }}
+      - run: |
+          pnpm exec playwright test --shard=${{ matrix.shared }}/${{ matrix.shardTotal }} --project=chromium-dev --project=chromium-prd
         timeout-minutes: 15
         env:
           TEMP_DIR: ${{ runner.temp }}
