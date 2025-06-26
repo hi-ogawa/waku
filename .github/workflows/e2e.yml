@@ -175,7 +175,7 @@ jobs:
       # - run: |
       #     pnpm exec playwright test --shard=${{ matrix.shared }}/${{ matrix.shardTotal }}
       - run: |
-          pnpm exec playwright test --shard=${{ matrix.shared }}/${{ matrix.shardTotal }} --project=chromium-dev --project=chromium-prd
+          pnpm exec playwright test --project=chromium-dev --project=chromium-prd
         timeout-minutes: 15
         env:
           TEMP_DIR: ${{ runner.temp }}
