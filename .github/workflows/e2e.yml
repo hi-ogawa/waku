@@ -140,8 +140,8 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         version: [22.7.0]
-        # shared: [1, 2, 3, 4]
-        # shardTotal: [4]
+        shared: [1, 2, 3, 4]
+        shardTotal: [4]
         # os: [ubuntu-latest, windows-latest, macos-latest]
         # version: [24.0.0, 22.7.0, 20.8.0]
         # exclude:
@@ -175,7 +175,7 @@ jobs:
       # - run: |
       #     pnpm exec playwright test --shard=${{ matrix.shared }}/${{ matrix.shardTotal }}
       - run: |
-          pnpm exec playwright test --project=chromium-dev --project=chromium-prd
+          pnpm exec playwright test --shard=${{ matrix.shared }}/${{ matrix.shardTotal }} --project=chromium-dev --project=chromium-prd
         timeout-minutes: 15
         env:
           TEMP_DIR: ${{ runner.temp }}
