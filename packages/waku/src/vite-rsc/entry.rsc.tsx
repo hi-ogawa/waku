@@ -10,90 +10,79 @@ import {
 import { stringToStream } from '../lib/utils/stream.js';
 import { INTERNAL_setAllEnv } from '../server.js';
 import { joinPath } from '../lib/utils/path.js';
-import { runWithContext } from '../lib/middleware/context.js';
+import { context } from '../lib/middleware/context.js';
 import { getErrorInfo } from '../lib/utils/custom-errors.js';
 import type {
   HandlerContext,
   Middleware,
   MiddlewareOptions,
 } from '../lib/middleware/types.js';
+import { runMiddlewareHandlers } from '../lib/hono/engine-utils.js';
+import { middlewares } from 'virtual:vite-rsc-waku/middlewares';
 
 //
 // server handler entry point
 //
 
-export default async function handler(request: Request): Promise<Response> {
-  INTERNAL_setAllEnv(process.env as any);
+export default createHandler();
 
-  const ctx: HandlerContext = {
-    req: {
-      body: request.body,
-      url: new URL(request.url),
-      method: request.method,
-      headers: Object.fromEntries(request.headers.entries()),
-    },
-    res: {},
-    data: {
-      __vite_rsc_request: request,
-    },
-  };
+function createHandler() {
+  // TODO: check if this is essential
+  let middlwareOptions: MiddlewareOptions;
+  if (import.meta.env.DEV) {
+    middlwareOptions = {
+      cmd: 'dev',
+      env: {},
+      unstable_onError: new Set(),
+      get config(): any {
+        throw new Error('unsupported');
+      },
+    };
+  } else {
+    middlwareOptions = {
+      cmd: 'start',
+      env: {},
+      unstable_onError: new Set(),
+      get loadEntries(): any {
+        throw new Error('unsupported');
+      },
+    };
+  }
 
-  // TODO: nest async calls
-  const middlewares = await loadMiddlewares();
-  for (const middleware of middlewares) {
-    let next = false;
-    await middleware(ctx, async () => {
-      next = true;
-    });
-    if (!next) {
-      return new Response(ctx.res.body, {
+  const allMiddlewares: Middleware[] = [
+    context,
+    ...middlewares,
+    () => handleRequest,
+  ];
+  const middlewareHandlers = allMiddlewares.map((m) => m(middlwareOptions));
+
+  return async (request: Request): Promise<Response> => {
+    INTERNAL_setAllEnv(process.env as any);
+
+    const ctx: HandlerContext = {
+      req: {
+        body: request.body,
+        url: new URL(request.url),
+        method: request.method,
+        headers: Object.fromEntries(request.headers.entries()),
+      },
+      res: {},
+      data: {
+        __vite_rsc_request: request,
+      },
+    };
+
+    await runMiddlewareHandlers(middlewareHandlers, ctx);
+
+    if (ctx.res.body || ctx.res.status) {
+      return new Response(ctx.res.body || '', {
         status: ctx.res.status ?? 200,
         headers: ctx.res.headers as any,
       });
     }
-  }
 
-  await runWithContext(ctx, () => handleRequest(ctx));
-
-  if (ctx.res.body || ctx.res.status) {
-    return new Response(ctx.res.body || '', {
-      status: ctx.res.status ?? 200,
-      headers: ctx.res.headers as any,
-    });
-  }
-
-  return new Response('404 Not Found', { status: 404 });
-}
-
-let loadedMiddlewares_: ReturnType<Middleware>[] | undefined;
-
-async function loadMiddlewares() {
-  if (!loadedMiddlewares_) {
-    const { middlewares } = await import('virtual:vite-rsc-waku/middlewares');
-    // TODO: check if this is essential
-    let middlwareOptions: MiddlewareOptions;
-    if (import.meta.env.DEV) {
-      middlwareOptions = {
-        cmd: 'dev',
-        env: {},
-        unstable_onError: new Set(),
-        get config(): any {
-          throw new Error('unsupported');
-        },
-      };
-    } else {
-      middlwareOptions = {
-        cmd: 'start',
-        env: {},
-        unstable_onError: new Set(),
-        get loadEntries(): any {
-          throw new Error('unsupported');
-        },
-      };
-    }
-    loadedMiddlewares_ = middlewares.map((m) => m(middlwareOptions));
-  }
-  return loadedMiddlewares_;
+    return new Response('404 Not Found', { status: 404 });
+  };
 }
 
 //
