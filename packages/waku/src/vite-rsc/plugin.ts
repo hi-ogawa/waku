@@ -172,19 +172,6 @@ export default function wakuPlugin(
           },
         };
       },
-      // async configurePreviewServer(server) {
-      //   // serve ssg html
-      //   // TODO: integrate hono
-      //   const outDir = server.config.environments.client!.build.outDir;
-      //   server.middlewares.use((req, _res, next) => {
-      //     const url = new URL(req.url!, 'https://test.local');
-      //     const htmlFile = url.pathname + '/index.html';
-      //     if (fs.existsSync(path.join(outDir, htmlFile))) {
-      //       req.url = htmlFile;
-      //     }
-      //     next();
-      //   });
-      // },
     },
     {
       name: 'rsc:waku:user-entries',
