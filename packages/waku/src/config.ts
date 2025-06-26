@@ -74,6 +74,8 @@ export interface Config {
         'build-deploy'?: () => UserConfig;
       }
     | undefined;
+
+  vite?: (options: { cmd: 'dev' | 'build' | 'start' }) => UserConfig;
 }
 
 export function defineConfig(config: Config) {

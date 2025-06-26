@@ -1,11 +1,6 @@
-import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
 import path from 'node:path';
-import process from 'node:process';
-
-const require = createRequire(import.meta.url);
 
 export async function cli(options: { cmd: string; port: string | undefined }) {
   let configFile: string | undefined;
@@ -29,28 +24,47 @@ export default {
     }
   }
 
-  // spawn vite
-  const viteBin = path.join(
-    require.resolve('vite/package.json'),
-    '../bin/vite.js',
-  );
-  const proc = spawn(
-    'node',
-    [
-      viteBin,
-      options.cmd === 'start' ? 'preview' : options.cmd,
-      ...(options.cmd == 'dev' ? ['--port', options.port || '3000'] : []),
-      ...(options.cmd == 'start' ? ['--port', options.port || '8080'] : []),
-      ...(configFile ? ['-c', configFile] : []),
-    ],
-    {
-      shell: false,
-      stdio: 'inherit',
-    },
-  );
-  proc.on('close', (code) => {
-    process.exitCode = code ?? 1;
-  });
+  if (options.cmd === 'dev') {
+    const vite = await import('vite');
+    const waku = (await import('./plugin.js')).default;
+    const port = parseInt(options.port || '3000', 10);
+    const server = await vite.createServer({
+      configFile: false,
+      plugins: [waku()],
+      server: {
+        port,
+      },
+    });
+    await server.listen();
+    server.printUrls();
+    server.bindCLIShortcuts();
+  }
+
+  if (options.cmd === 'build') {
+    const vite = await import('vite');
+    const waku = (await import('./plugin.js')).default;
+    const builder = await vite.createBuilder({
+      configFile: false,
+      plugins: [waku()],
+    });
+    await builder.buildApp();
+  }
+
+  if (options.cmd === 'start') {
+    // TODO: Vite preview can be replaced with own Hono server
+    const vite = await import('vite');
+    const waku = (await import('./plugin.js')).default;
+    const port = parseInt(options.port || '8080', 10);
+    const server = await vite.preview({
+      configFile: false,
+      plugins: [waku()],
+      preview: {
+        port,
+      },
+    });
+    server.printUrls();
+    server.bindCLIShortcuts();
+  }
 }
 
 function hashString(v: string) {
