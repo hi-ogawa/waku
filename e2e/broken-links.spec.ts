@@ -139,44 +139,41 @@ test.describe('broken-links: static server', () => {
   });
 });
 
-// for (const mode of ['DEV', 'PRD'] as const) {
-for (const mode of ['?'] as const) {
-  test.describe(`broken-links/dynamic-not-found: ${mode}`, async () => {
-    let port: number;
-    let stopApp: () => Promise<void>;
-    test.beforeAll(async ({ mode }) => {
-      ({ port, stopApp } = await startApp(mode));
-    });
-    test.afterAll(async () => {
-      await stopApp();
-    });
-
-    test('access sync page directly', async ({ page }) => {
-      await page.goto(`http://localhost:${port}/dynamic-not-found/sync`);
-      await expect(page.getByRole('heading')).toHaveText('Custom not found');
-      await expect(page).toHaveTitle('Custom Not Found Title');
-    });
-
-    test('access async page directly', async ({ page }) => {
-      await page.goto(`http://localhost:${port}/dynamic-not-found/async`);
-      await expect(page.getByRole('heading')).toHaveText('Custom not found');
-      await expect(page).toHaveTitle('Custom Not Found Title');
-    });
-
-    test('access sync page with client navigation', async ({ page }) => {
-      await page.goto(`http://localhost:${port}/`);
-      await expect(page.getByRole('heading')).toHaveText('Index');
-      await page.click("a[href='/dynamic-not-found/sync']");
-      await expect(page.getByRole('heading')).toHaveText('Custom not found');
-      await expect(page).toHaveTitle('Custom Not Found Title');
-    });
-
-    test('access async page with client navigation', async ({ page }) => {
-      await page.goto(`http://localhost:${port}/`);
-      await expect(page.getByRole('heading')).toHaveText('Index');
-      await page.click("a[href='/dynamic-not-found/async']");
-      await expect(page.getByRole('heading')).toHaveText('Custom not found');
-      await expect(page).toHaveTitle('Custom Not Found Title');
-    });
+test.describe(`broken-links/dynamic-not-found`, async () => {
+  let port: number;
+  let stopApp: () => Promise<void>;
+  test.beforeAll(async ({ mode }) => {
+    ({ port, stopApp } = await startApp(mode));
   });
-}
+  test.afterAll(async () => {
+    await stopApp();
+  });
+
+  test('access sync page directly', async ({ page }) => {
+    await page.goto(`http://localhost:${port}/dynamic-not-found/sync`);
+    await expect(page.getByRole('heading')).toHaveText('Custom not found');
+    await expect(page).toHaveTitle('Custom Not Found Title');
+  });
+
+  test('access async page directly', async ({ page }) => {
+    await page.goto(`http://localhost:${port}/dynamic-not-found/async`);
+    await expect(page.getByRole('heading')).toHaveText('Custom not found');
+    await expect(page).toHaveTitle('Custom Not Found Title');
+  });
+
+  test('access sync page with client navigation', async ({ page }) => {
+    await page.goto(`http://localhost:${port}/`);
+    await expect(page.getByRole('heading')).toHaveText('Index');
+    await page.click("a[href='/dynamic-not-found/sync']");
+    await expect(page.getByRole('heading')).toHaveText('Custom not found');
+    await expect(page).toHaveTitle('Custom Not Found Title');
+  });
+
+  test('access async page with client navigation', async ({ page }) => {
+    await page.goto(`http://localhost:${port}/`);
+    await expect(page.getByRole('heading')).toHaveText('Index');
+    await page.click("a[href='/dynamic-not-found/async']");
+    await expect(page.getByRole('heading')).toHaveText('Custom not found');
+    await expect(page).toHaveTitle('Custom Not Found Title');
+  });
+});
