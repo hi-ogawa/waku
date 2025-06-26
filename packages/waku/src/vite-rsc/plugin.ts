@@ -22,6 +22,7 @@ import {
 import { wakuDeployVercelPlugin } from './deploy/vercel/plugin.js';
 import { wakuAllowServerPlugin } from './plugins/allow-server.js';
 import { DIST_PUBLIC } from '../lib/builder/constants.js';
+import { fsRouterTypegenPlugin } from '../lib/plugins/vite-plugin-fs-router-typegen.js';
 
 // TODO: refactor and reuse common plugins from lib/plugins
 
@@ -450,6 +451,7 @@ export default function wakuPlugin(
         },
       },
     },
+    fsRouterTypegenPlugin({ srcDir: wakuConfig.srcDir }),
     !!wakuFlags['with-vercel'] && wakuDeployVercelPlugin(),
   ];
 }
