@@ -1,7 +1,6 @@
 import {
   mergeConfig,
   normalizePath,
-  runnerImport,
   type EnvironmentOptions,
   type Plugin,
   type PluginOption,
@@ -27,17 +26,36 @@ import { wakuAllowServerPlugin } from './plugins/allow-server.js';
 
 const PKG_NAME = 'waku';
 
-export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
-  let wakuConfig: Config | undefined;
-  let wakuFlags: Record<string, unknown> = {};
-  // for now passed through main cli
-  if (process.env.WAKU_VITE_RSC_FLAGS) {
-    try {
-      wakuFlags = JSON.parse(process.env.WAKU_VITE_RSC_FLAGS);
-    } catch (e) {
-      console.error('[failed to load cli flags]', e);
-    }
-  }
+export type WakuPluginOptions = {
+  flags?: WakuFlags | undefined;
+  config?: Config | undefined;
+};
+
+type WakuFlags = {
+  'experimental-compress'?: boolean | undefined;
+  'experimental-partial'?: boolean | undefined;
+  'with-vercel'?: boolean | undefined;
+};
+
+export default function wakuPlugin(
+  wakuPluginOptions?: WakuPluginOptions,
+): PluginOption {
+  const wakuConfig = {
+    ...wakuPluginOptions?.config,
+    basePath: '/',
+    srcDir: 'src',
+    distDir: 'dist',
+    pagesDir: 'pages',
+    apiDir: 'api',
+    privateDir: 'private',
+    rscBase: 'RSC',
+    middleware: [
+      'waku/middleware/context',
+      'waku/middleware/dev-server',
+      'waku/middleware/handler',
+    ],
+  } satisfies Config;
+  const wakuFlags: Record<string, unknown> = wakuPluginOptions?.flags ?? {};
 
   return [
     react(),
@@ -56,26 +74,6 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
     {
       name: 'rsc:waku',
       async config(_config, env) {
-        if (!env.isPreview) {
-          try {
-            const imported = await runnerImport<{ default: Config }>(
-              '/waku.config',
-            );
-            wakuConfig = imported.module.default;
-          } catch (e) {
-            // ignore errors when waku.config doesn't exist
-            if (
-              !(
-                e instanceof Error &&
-                e.message ===
-                  'Failed to load url /waku.config (resolved id: /waku.config). Does the file exist?'
-              )
-            ) {
-              console.error(e);
-            }
-          }
-        }
-
         const toEnvironmentOption = (entry: string) =>
           ({
             build: {
@@ -89,8 +87,12 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
 
         let viteRscConfig: UserConfig = {
           define: {
-            'import.meta.env.WAKU_CONFIG_BASE_PATH': JSON.stringify('/'),
-            'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify('RSC'),
+            'import.meta.env.WAKU_CONFIG_BASE_PATH': JSON.stringify(
+              wakuConfig.basePath,
+            ),
+            'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify(
+              wakuConfig.rscBase,
+            ),
           },
           environments: {
             client: toEnvironmentOption('entry.browser'),
@@ -99,6 +101,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
           },
         };
 
+        // backcompat for old vite config overrides
         // TODO: adding `plugins` here is not supported.
         viteRscConfig = mergeConfig(
           viteRscConfig,
@@ -115,6 +118,12 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
             wakuConfig?.unstable_viteConfigs?.['build-server']?.() ?? {},
           );
         }
+
+        if (wakuConfig.vite) {
+          const { plugins, ...rest } = wakuConfig.vite ?? {};
+          viteRscConfig = mergeConfig(viteRscConfig, rest);
+        }
+
         return viteRscConfig;
       },
       configEnvironment(name, config, _env) {
@@ -430,6 +439,7 @@ export default function wakuViteRscPlugin(_wakuOptions?: {}): PluginOption {
       },
     },
     !!wakuFlags['with-vercel'] && wakuDeployVercelPlugin(),
+    ...(wakuConfig.vite?.plugins ?? []),
   ];
 }
 
