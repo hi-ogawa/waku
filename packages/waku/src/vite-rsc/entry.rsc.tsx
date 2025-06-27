@@ -58,9 +58,6 @@ export function createHonoHandler(): MiddlewareHandler {
   const handlers = allMiddlewares.map((m) => m(middlwareOptions));
 
   return async (c, next) => {
-    // TODO: where this should go.
-    INTERNAL_setAllEnv(process.env as any);
-
     const ctx: HandlerContext = {
       req: {
         body: c.req.raw.body,
@@ -171,7 +168,7 @@ function createRenderUtils({
   };
 }
 
-// cf. packages/waku/src/lib/middleware/handler.ts `getInput`
+// cf. `getInput` in packages/waku/src/lib/middleware/handler.ts
 async function getInput(ctx: HandlerContext) {
   const url = ctx.req.url;
   const rscPathPrefix =
@@ -259,7 +256,10 @@ async function getInput(ctx: HandlerContext) {
   return { input, temporaryReferences };
 }
 
+// cf. `handler` in packages/waku/src/lib/middleware/handler.ts
 async function handleRequest(ctx: HandlerContext) {
+  INTERNAL_setAllEnv(process.env as any);
+
   await import('virtual:vite-rsc-waku/set-platform-data');
 
   const { input, temporaryReferences } = await getInput(ctx);
@@ -312,6 +312,7 @@ async function handleRequest(ctx: HandlerContext) {
 
 export async function handleBuild() {
   INTERNAL_setAllEnv(process.env as any);
+
   const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
     .default;
 
