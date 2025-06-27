@@ -3,16 +3,12 @@ import { getRequestListener } from '@hono/node-server';
 import { Hono } from 'hono';
 import { createHonoHandler } from '../../entry.rsc.js';
 import { honoEnhancer } from 'virtual:vite-rsc-waku/hono-enhancer';
-import { flags, config } from 'virtual:vite-rsc-waku/config';
-import { compress } from 'hono/compress';
+import { config } from 'virtual:vite-rsc-waku/config';
 import path from 'node:path';
 import fs from 'node:fs';
 import { DIST_PUBLIC } from '../../../lib/builder/constants.js';
 
 function createApp(app: Hono) {
-  if (flags['experimental-compress']) {
-    app.use(compress());
-  }
   app.use(createHonoHandler());
   app.notFound((c) => {
     const file = path.join(config.distDir, DIST_PUBLIC, '404.html');
