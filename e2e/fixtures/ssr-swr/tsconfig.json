@@ -12,5 +12,6 @@
     "jsx": "react-jsx",
     "rootDir": "./src",
     "outDir": "./dist"
-  }
+  },
+  "include": ["./src", "./waku.config.ts"]
 }
