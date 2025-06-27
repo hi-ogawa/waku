@@ -287,7 +287,7 @@ async function handleRequest(ctx: HandlerContext) {
     }
   }
 
-  // TODO
+  // fallback index html like packages/waku/src/lib/plugins/vite-plugin-rsc-index.ts
   if (!(ctx.res.body || ctx.res.status) && ctx.req.url.pathname === '/') {
     const ssrEntryModule = await import.meta.viteRsc.loadModule<
       typeof import('./entry.ssr.tsx')
