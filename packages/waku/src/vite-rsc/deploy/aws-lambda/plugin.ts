@@ -2,9 +2,9 @@ import { normalizePath, type Plugin } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export function wakuDeployVercelPlugin(): Plugin {
+export function wakuDeployAwsLambdaPlugin(): Plugin {
   return {
-    name: 'waku:deploy-vercel',
+    name: 'waku:deploy-aws-lambda',
     config() {
       return {
         define: {
@@ -15,7 +15,7 @@ export function wakuDeployVercelPlugin(): Plugin {
             build: {
               rollupOptions: {
                 input: {
-                  vercel: 'waku/vite-rsc/deploy/vercel/entry',
+                  vercel: 'waku/vite-rsc/deploy/vercel/entry.vercel',
                 },
               },
             },

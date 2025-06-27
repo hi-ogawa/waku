@@ -23,6 +23,11 @@ import { wakuDeployVercelPlugin } from './deploy/vercel/plugin.js';
 import { wakuAllowServerPlugin } from './plugins/allow-server.js';
 import { DIST_PUBLIC } from '../lib/builder/constants.js';
 import { fsRouterTypegenPlugin } from '../lib/plugins/vite-plugin-fs-router-typegen.js';
+import { wakuDeployNetlifyPlugin } from './deploy/netflify/plugin.js';
+import { wakuDeployCloudflarePlugin } from './deploy/cloudflare/plugin.js';
+import { wakuDeployPartykitPlugin } from './deploy/partykit/plugin.js';
+import { wakuDeployDenoPlugin } from './deploy/deno/plugin.js';
+import { wakuDeployAwsLambdaPlugin } from './deploy/aws-lambda/plugin.js';
 
 const PKG_NAME = 'waku';
 
@@ -35,6 +40,13 @@ export type WakuFlags = {
   'experimental-compress'?: boolean | undefined;
   'experimental-partial'?: boolean | undefined;
   'with-vercel'?: boolean | undefined;
+  'with-vercel-static'?: boolean | undefined;
+  'with-netlify'?: boolean | undefined;
+  'with-netlify-static'?: boolean | undefined;
+  'with-cloudflare'?: boolean | undefined;
+  'with-partykit'?: boolean | undefined;
+  'with-deno'?: boolean | undefined;
+  'with-aws-lambda'?: boolean | undefined;
 };
 
 export default function wakuPlugin(
@@ -58,7 +70,7 @@ export default function wakuPlugin(
     vite: undefined,
     ...wakuPluginOptions?.config,
   };
-  const wakuFlags: Record<string, unknown> = wakuPluginOptions?.flags ?? {};
+  const wakuFlags = wakuPluginOptions?.flags ?? {};
 
   return [
     ...(wakuConfig.vite?.plugins ?? []),
@@ -446,7 +458,20 @@ export default function wakuPlugin(
       },
     },
     fsRouterTypegenPlugin({ srcDir: wakuConfig.srcDir }),
-    !!wakuFlags['with-vercel'] && wakuDeployVercelPlugin(),
+    !!(
+      wakuFlags['with-vercel'] ||
+      wakuFlags['with-vercel-static'] ||
+      process.env.VERCEL
+    ) && wakuDeployVercelPlugin(),
+    !!(
+      wakuFlags['with-netlify'] ||
+      wakuFlags['with-netlify-static'] ||
+      process.env.NETLIFY
+    ) && wakuDeployNetlifyPlugin(),
+    !!wakuFlags['with-cloudflare'] && wakuDeployCloudflarePlugin(),
+    !!wakuFlags['with-partykit'] && wakuDeployPartykitPlugin(),
+    !!wakuFlags['with-deno'] && wakuDeployDenoPlugin(),
+    !!wakuFlags['with-aws-lambda'] && wakuDeployAwsLambdaPlugin(),
   ];
 }
 
