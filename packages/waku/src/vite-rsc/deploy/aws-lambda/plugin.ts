@@ -9,7 +9,6 @@ export function wakuDeployAwsLambdaPlugin(deployOptions: {
   wakuConfig: Required<Config>;
   streaming: boolean;
 }): Plugin {
-  process.env.DEPLOY_AWS_LAMBDA_STREAMING;
   return {
     name: 'waku:deploy-aws-lambda',
     config() {
