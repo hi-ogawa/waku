@@ -1,4 +1,4 @@
-import { normalizePath, type Plugin } from 'vite';
+import { type Plugin } from 'vite';
 import path from 'node:path';
 import { rmSync, cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import type { Config } from '../../../config.js';
@@ -21,8 +21,7 @@ export function wakuDeployVercelPlugin(deployOptions: {
             build: {
               rollupOptions: {
                 input: {
-                  [SERVE_JS.split('.')[0]!]:
-                    'waku/vite-rsc/deploy/vercel/entry',
+                  index: 'waku/vite-rsc/deploy/vercel/entry',
                 },
               },
             },
@@ -48,24 +47,23 @@ export function wakuDeployVercelPlugin(deployOptions: {
 
         if (deployOptions.serverless) {
           // for serverless function
-          // TODO: use @vercel/nft to support native dependencies
+          // TODO(waku): can use `@vercel/nft` to packaging with native dependencies
           const serverlessDir = path.join(
             outputDir,
             'functions',
-            opts.rscBase + 'index.func',
+            opts.rscBase + '.func',
           );
           rmSync(serverlessDir, { recursive: true, force: true });
           mkdirSync(path.join(serverlessDir, opts.distDir), {
             recursive: true,
           });
-          cpSync(
-            config.environments.rsc!.build.outDir,
-            path.join(serverlessDir, opts.distDir, 'rsc'),
-            { recursive: true },
+          writeFileSync(
+            path.join(rootDir, opts.distDir, SERVE_JS),
+            `export { default } from './rsc/index.js';\n`,
           );
           cpSync(
-            config.environments.ssr!.build.outDir,
-            path.join(serverlessDir, opts.distDir, 'ssr'),
+            path.join(rootDir, opts.distDir),
+            path.join(serverlessDir, opts.distDir),
             { recursive: true },
           );
           if (existsSync(path.join(rootDir, opts.privateDir))) {
@@ -77,12 +75,7 @@ export function wakuDeployVercelPlugin(deployOptions: {
           }
           const vcConfigJson = {
             runtime: 'nodejs22.x',
-            handler: normalizePath(
-              path.relative(
-                process.cwd(),
-                path.join(config.environments.rsc!.build.outDir, SERVE_JS),
-              ),
-            ),
+            handler: `${opts.distDir}/${SERVE_JS}`,
             launcherType: 'Nodejs',
           };
           writeFileSync(
