@@ -28,7 +28,6 @@ export default createHandler();
 
 // cf. packages/waku/src/lib/hono/engine.ts
 function createHandler() {
-  // TODO: check if this is essential
   let middlwareOptions: MiddlewareOptions;
   if (import.meta.env.DEV) {
     middlwareOptions = {
@@ -50,6 +49,7 @@ function createHandler() {
     };
   }
 
+  // assume main builtin handlers are always enabled
   const allMiddlewares: Middleware[] = [
     context,
     ...middlewares,
