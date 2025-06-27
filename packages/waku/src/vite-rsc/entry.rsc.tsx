@@ -26,6 +26,7 @@ import { middlewares } from 'virtual:vite-rsc-waku/middlewares';
 
 export default createHandler();
 
+// cf. packages/waku/src/lib/hono/engine.ts
 function createHandler() {
   // TODO: check if this is essential
   let middlwareOptions: MiddlewareOptions;
@@ -158,13 +159,8 @@ function createRenderUtils({
   };
 }
 
-async function handleRequest(ctx: HandlerContext) {
-  await import('virtual:vite-rsc-waku/set-platform-data');
-
-  const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
-    .default;
-
-  // cf. packages/waku/src/lib/middleware/handler.ts `getInput`
+// cf. packages/waku/src/lib/middleware/handler.ts `getInput`
+async function getInput(ctx: HandlerContext) {
   const url = ctx.req.url;
   const rscPathPrefix =
     import.meta.env.WAKU_CONFIG_BASE_PATH +
@@ -172,7 +168,7 @@ async function handleRequest(ctx: HandlerContext) {
     '/';
   let rscPath: string | undefined;
   let temporaryReferences: unknown | undefined;
-  let wakuInput: HandleRequestInput;
+  let input: HandleRequestInput;
   const request = ctx.data.__vite_rsc_request as Request;
   if (url.pathname.startsWith(rscPathPrefix)) {
     rscPath = decodeRscPath(
@@ -188,7 +184,7 @@ async function handleRequest(ctx: HandlerContext) {
       temporaryReferences = ReactServer.createTemporaryReferenceSet();
       const args = await ReactServer.decodeReply(body, { temporaryReferences });
       const action = await ReactServer.loadServerAction(actionId);
-      wakuInput = {
+      input = {
         type: 'function',
         fn: action as any,
         args,
@@ -206,7 +202,7 @@ async function handleRequest(ctx: HandlerContext) {
           temporaryReferences,
         });
       }
-      wakuInput = {
+      input = {
         type: 'component',
         rscPath,
         rscParams,
@@ -223,7 +219,7 @@ async function handleRequest(ctx: HandlerContext) {
       // server action: no js (progressive enhancement)
       const formData = await request.formData();
       const decodedAction = await ReactServer.decodeAction(formData);
-      wakuInput = {
+      input = {
         type: 'action',
         fn: async () => {
           const result = await decodedAction();
@@ -234,7 +230,7 @@ async function handleRequest(ctx: HandlerContext) {
       };
     } else {
       // POST API request
-      wakuInput = {
+      input = {
         type: 'custom',
         pathname: decodeURI(url.pathname),
         req: ctx.req,
@@ -242,12 +238,22 @@ async function handleRequest(ctx: HandlerContext) {
     }
   } else {
     // SSR
-    wakuInput = {
+    input = {
       type: 'custom',
       pathname: decodeURI(url.pathname),
       req: ctx.req,
     };
   }
+  return { input, temporaryReferences };
+}
+
+async function handleRequest(ctx: HandlerContext) {
+  await import('virtual:vite-rsc-waku/set-platform-data');
+
+  const { input, temporaryReferences } = await getInput(ctx);
+
+  const wakuServerEntry = (await import('virtual:vite-rsc-waku/server-entry'))
+    .default;
 
   const renderUtils = createRenderUtils({
     temporaryReferences,
@@ -255,7 +261,7 @@ async function handleRequest(ctx: HandlerContext) {
 
   let res: HandleRequestOutput;
   try {
-    res = await wakuServerEntry.handleRequest(wakuInput, renderUtils);
+    res = await wakuServerEntry.handleRequest(input, renderUtils);
   } catch (e) {
     const info = getErrorInfo(e);
     ctx.res.status = info?.status || 500;
@@ -281,8 +287,8 @@ async function handleRequest(ctx: HandlerContext) {
     }
   }
 
-  // TODO: remove url.pathname === '/'
-  if (!(ctx.res.body || ctx.res.status) && url.pathname === '/') {
+  // TODO
+  if (!(ctx.res.body || ctx.res.status) && ctx.req.url.pathname === '/') {
     const ssrEntryModule = await import.meta.viteRsc.loadModule<
       typeof import('./entry.ssr.tsx')
     >('ssr', 'index');
