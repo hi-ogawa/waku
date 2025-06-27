@@ -1,5 +1,9 @@
 import { type Plugin } from 'vite';
 import type { Config } from '../../../config.js';
+import { writeFileSync } from 'node:fs';
+import path from 'node:path';
+
+const SERVE_JS = 'serve-deno.js';
 
 export function wakuDeployDenoPlugin(deployOptions: {
   wakuConfig: Required<Config>;
@@ -13,8 +17,9 @@ export function wakuDeployDenoPlugin(deployOptions: {
             build: {
               rollupOptions: {
                 input: {
-                  index: 'waku/vite-rsc/deploy/deno/entry',
+                  deno: 'waku/vite-rsc/deploy/deno/entry',
                 },
+                external: [/^jsr:/],
               },
             },
           },
@@ -28,9 +33,11 @@ export function wakuDeployDenoPlugin(deployOptions: {
         if (this.environment.name !== 'ssr') {
           return;
         }
-        const config = this.environment.getTopLevelConfig();
-        config.root;
-        deployOptions.wakuConfig;
+        const opts = deployOptions.wakuConfig;
+        writeFileSync(
+          path.join(opts.distDir, SERVE_JS),
+          `import './rsc/deno.js';\n`,
+        );
       },
     },
   };

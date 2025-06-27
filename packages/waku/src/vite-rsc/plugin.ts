@@ -23,7 +23,7 @@ import { wakuDeployVercelPlugin } from './deploy/vercel/plugin.js';
 import { wakuAllowServerPlugin } from './plugins/allow-server.js';
 import { DIST_PUBLIC } from '../lib/builder/constants.js';
 import { fsRouterTypegenPlugin } from '../lib/plugins/vite-plugin-fs-router-typegen.js';
-import { wakuDeployNetlifyPlugin } from './deploy/netflify/plugin.js';
+import { wakuDeployNetlifyPlugin } from './deploy/netlify/plugin.js';
 import { wakuDeployCloudflarePlugin } from './deploy/cloudflare/plugin.js';
 import { wakuDeployPartykitPlugin } from './deploy/partykit/plugin.js';
 import { wakuDeployDenoPlugin } from './deploy/deno/plugin.js';
