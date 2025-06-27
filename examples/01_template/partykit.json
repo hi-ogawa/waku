@@ -1,6 +1,0 @@
-{
-  "name": "waku-project",
-  "main": "dist/serve-partykit.js",
-  "compatibilityDate": "2023-02-16",
-  "serve": "./dist/public"
-}

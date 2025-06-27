@@ -29,5 +29,4 @@ function createApp(app: Hono) {
 
 const app = honoEnhancer(createApp)(new Hono());
 
-// @ts-ignore
 Deno.serve(app.fetch);
