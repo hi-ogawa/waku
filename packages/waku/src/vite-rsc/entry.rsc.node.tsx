@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { Hono } from 'hono';
-import handler from './entry.rsc.js';
+import { createHonoHandler } from './entry.rsc.js';
 import { honoEnhancer } from 'virtual:vite-rsc-waku/hono-enhancer';
 import { flags, config } from 'virtual:vite-rsc-waku/config';
 import { compress } from 'hono/compress';
@@ -18,7 +18,7 @@ function createApp(app: Hono) {
   if (import.meta.env.WAKU_SERVE_STATIC) {
     app.use(serveStatic({ root: path.join(config.distDir, DIST_PUBLIC) }));
   }
-  app.use((ctx) => handler(ctx.req.raw));
+  app.use(createHonoHandler());
   app.notFound((c) => {
     const file = path.join(config.distDir, DIST_PUBLIC, '404.html');
     if (fs.existsSync(file)) {

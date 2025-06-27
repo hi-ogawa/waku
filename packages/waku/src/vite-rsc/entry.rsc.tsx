@@ -17,17 +17,17 @@ import type {
   Middleware,
   MiddlewareOptions,
 } from '../lib/middleware/types.js';
-import { runMiddlewareHandlers } from '../lib/hono/engine-utils.js';
 import { middlewares } from 'virtual:vite-rsc-waku/middlewares';
+import type { MiddlewareHandler } from 'hono';
+
+// TODO: refactor
 
 //
 // server handler entry point
 //
 
-export default createHandler();
-
 // cf. packages/waku/src/lib/hono/engine.ts
-function createHandler() {
+export function createHonoHandler(): MiddlewareHandler {
   let middlwareOptions: MiddlewareOptions;
   if (import.meta.env.DEV) {
     middlwareOptions = {
@@ -55,34 +55,46 @@ function createHandler() {
     ...middlewares,
     () => handleRequest,
   ];
-  const middlewareHandlers = allMiddlewares.map((m) => m(middlwareOptions));
+  const handlers = allMiddlewares.map((m) => m(middlwareOptions));
 
-  return async (request: Request): Promise<Response> => {
+  return async (c, next) => {
+    // TODO: where this should go.
     INTERNAL_setAllEnv(process.env as any);
 
     const ctx: HandlerContext = {
       req: {
-        body: request.body,
-        url: new URL(request.url),
-        method: request.method,
-        headers: Object.fromEntries(request.headers.entries()),
+        body: c.req.raw.body,
+        url: new URL(c.req.url),
+        method: c.req.method,
+        headers: c.req.header(),
       },
       res: {},
       data: {
-        __vite_rsc_request: request,
+        __hono_context: c,
       },
     };
-
-    await runMiddlewareHandlers(middlewareHandlers, ctx);
-
-    if (ctx.res.body || ctx.res.status) {
-      return new Response(ctx.res.body || '', {
-        status: ctx.res.status ?? 200,
-        headers: ctx.res.headers as any,
+    const run = async (index: number) => {
+      if (index >= handlers.length) {
+        return;
+      }
+      let alreadyCalled = false;
+      await handlers[index]!(ctx, async () => {
+        if (!alreadyCalled) {
+          alreadyCalled = true;
+          await run(index + 1);
+        }
       });
+    };
+    await run(0);
+    if (ctx.res.body || ctx.res.status) {
+      const status = ctx.res.status || 200;
+      const headers = ctx.res.headers || {};
+      if (ctx.res.body) {
+        return c.body(ctx.res.body, status as never, headers);
+      }
+      return c.body(null, status as never, headers);
     }
-
-    return new Response('404 Not Found', { status: 404 });
+    await next();
   };
 }
 
@@ -169,7 +181,7 @@ async function getInput(ctx: HandlerContext) {
   let rscPath: string | undefined;
   let temporaryReferences: unknown | undefined;
   let input: HandleRequestInput;
-  const request = ctx.data.__vite_rsc_request as Request;
+  const request = (ctx.data.__hono_context as any).req.raw as Request;
   if (url.pathname.startsWith(rscPathPrefix)) {
     rscPath = decodeRscPath(
       decodeURI(url.pathname.slice(rscPathPrefix.length)),
