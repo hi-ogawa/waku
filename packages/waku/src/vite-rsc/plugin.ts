@@ -462,7 +462,11 @@ export default function wakuPlugin(
       wakuFlags['with-vercel'] ||
       wakuFlags['with-vercel-static'] ||
       process.env.VERCEL
-    ) && wakuDeployVercelPlugin({ serverless: !!wakuFlags['with-vercel'] }),
+    ) &&
+      wakuDeployVercelPlugin({
+        serverless: !!wakuFlags['with-vercel'],
+        wakuConfig,
+      }),
     !!(
       wakuFlags['with-netlify'] ||
       wakuFlags['with-netlify-static'] ||

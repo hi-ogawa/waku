@@ -1,9 +1,11 @@
 import { normalizePath, type Plugin } from 'vite';
-import fs from 'node:fs';
 import path from 'node:path';
+import { rmSync, cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import type { Config } from '../../../config.js';
 
 export function wakuDeployVercelPlugin(deployOptions: {
   serverless: boolean;
+  wakuConfig: Required<Config>;
 }): Plugin {
   return {
     name: 'waku:deploy-vercel',
@@ -25,6 +27,8 @@ export function wakuDeployVercelPlugin(deployOptions: {
         },
       };
     },
+    // "post ssr writeBundle" is a signal that the entire build is finished.
+    // this can be replaced with `buildApp` hook on Vite 7 https://github.com/vitejs/vite/pull/19971
     writeBundle: {
       order: 'post',
       sequential: true,
@@ -33,92 +37,77 @@ export function wakuDeployVercelPlugin(deployOptions: {
           return;
         }
         const config = this.environment.getTopLevelConfig();
-        await buildVercel({
-          serverless: deployOptions.serverless,
-          clientDir: config.environments.client!.build.outDir,
-          serverDir: config.environments.rsc!.build.outDir,
-        });
+        const opts = deployOptions.wakuConfig;
+        const rootDir = config.root;
+        const publicDir = config.environments.client!.build.outDir;
+        const outputDir = path.resolve('.vercel', 'output');
+        cpSync(publicDir, path.join(outputDir, 'static'), { recursive: true });
+
+        if (deployOptions.serverless) {
+          // for serverless function
+          // TODO: use @vercel/nft to support native dependencies
+          const serverlessDir = path.join(
+            outputDir,
+            'functions',
+            opts.rscBase + 'index.func',
+          );
+          rmSync(serverlessDir, { recursive: true, force: true });
+          mkdirSync(path.join(serverlessDir, opts.distDir), {
+            recursive: true,
+          });
+          cpSync(
+            config.environments.rsc!.build.outDir,
+            path.join(serverlessDir, opts.distDir, 'rsc'),
+            { recursive: true },
+          );
+          cpSync(
+            config.environments.ssr!.build.outDir,
+            path.join(serverlessDir, opts.distDir, 'ssr'),
+            { recursive: true },
+          );
+          if (existsSync(path.join(rootDir, opts.privateDir))) {
+            cpSync(
+              path.join(rootDir, opts.privateDir),
+              path.join(serverlessDir, opts.privateDir),
+              { recursive: true, dereference: true },
+            );
+          }
+          const vcConfigJson = {
+            runtime: 'nodejs22.x',
+            handler: normalizePath(
+              path.relative(
+                process.cwd(),
+                path.join(config.environments.rsc!.build.outDir, 'vercel.js'),
+              ),
+            ),
+            launcherType: 'Nodejs',
+          };
+          writeFileSync(
+            path.join(serverlessDir, '.vc-config.json'),
+            JSON.stringify(vcConfigJson, null, 2),
+          );
+          writeFileSync(
+            path.join(serverlessDir, 'package.json'),
+            JSON.stringify({ type: 'module' }, null, 2),
+          );
+        }
+
+        const routes = deployOptions.serverless
+          ? [
+              { handle: 'filesystem' },
+              {
+                src: opts.basePath + '(.*)',
+                dest: opts.basePath + opts.rscBase + '/',
+              },
+            ]
+          : undefined;
+        const configJson = { version: 3, routes };
+        mkdirSync(outputDir, { recursive: true });
+        writeFileSync(
+          path.join(outputDir, 'config.json'),
+          JSON.stringify(configJson, null, 2),
+        );
       },
     },
   };
-}
-
-// copied from my own adapter for now
-// https://github.com/hi-ogawa/rsc-movies/blob/8e350bf8328b67e94cffe95abd6a01881ecd937d/vite.config.ts#L48
-async function buildVercel(options: {
-  serverless: boolean;
-  clientDir: string;
-  serverDir: string;
-}) {
-  const adapterDir = './.vercel/output';
-  fs.rmSync(adapterDir, { recursive: true, force: true });
-  fs.mkdirSync(adapterDir, { recursive: true });
-  fs.writeFileSync(
-    path.join(adapterDir, 'config.json'),
-    JSON.stringify(
-      {
-        version: 3,
-        trailingSlash: false,
-        routes: [
-          {
-            src: '^/assets/(.*)$',
-            headers: {
-              'cache-control': 'public, immutable, max-age=31536000',
-            },
-          },
-          {
-            handle: 'filesystem',
-          },
-          {
-            src: '.*',
-            dest: '/',
-          },
-        ],
-        overrides: {},
-      },
-      null,
-      2,
-    ),
-  );
-
-  // static
-  fs.mkdirSync(path.join(adapterDir, 'static'), { recursive: true });
-  fs.cpSync(options.clientDir, path.join(adapterDir, 'static'), {
-    recursive: true,
-  });
-
-  // function config
-  const functionDir = path.join(adapterDir, 'functions/index.func');
-  const serverEntry = path.join(options.serverDir, 'vercel.js');
-  fs.mkdirSync(functionDir, {
-    recursive: true,
-  });
-  fs.writeFileSync(
-    path.join(functionDir, '.vc-config.json'),
-    JSON.stringify(
-      {
-        runtime: 'nodejs22.x',
-        handler: normalizePath(path.relative(process.cwd(), serverEntry)),
-        launcherType: 'Nodejs',
-      },
-      null,
-      2,
-    ),
-  );
-
-  // copy server entry and dependencies
-  const { nodeFileTrace } = await import('@vercel/nft');
-  const result = await nodeFileTrace([serverEntry]);
-  for (const file of result.fileList) {
-    const dest = path.join(functionDir, file);
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    // preserve pnpm node_modules releative symlinks
-    const stats = fs.lstatSync(file);
-    if (stats.isSymbolicLink()) {
-      const link = fs.readlinkSync(file);
-      fs.symlinkSync(link, dest);
-    } else {
-      fs.copyFileSync(file, dest);
-    }
-  }
 }
