@@ -2,7 +2,9 @@ import { normalizePath, type Plugin } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export function wakuDeployVercelPlugin(): Plugin {
+export function wakuDeployVercelPlugin(deployOptions: {
+  serverless: boolean;
+}): Plugin {
   return {
     name: 'waku:deploy-vercel',
     config() {
@@ -32,6 +34,7 @@ export function wakuDeployVercelPlugin(): Plugin {
         }
         const config = this.environment.getTopLevelConfig();
         await buildVercel({
+          serverless: deployOptions.serverless,
           clientDir: config.environments.client!.build.outDir,
           serverDir: config.environments.rsc!.build.outDir,
         });
@@ -42,7 +45,11 @@ export function wakuDeployVercelPlugin(): Plugin {
 
 // copied from my own adapter for now
 // https://github.com/hi-ogawa/rsc-movies/blob/8e350bf8328b67e94cffe95abd6a01881ecd937d/vite.config.ts#L48
-async function buildVercel(options: { clientDir: string; serverDir: string }) {
+async function buildVercel(options: {
+  serverless: boolean;
+  clientDir: string;
+  serverDir: string;
+}) {
   const adapterDir = './.vercel/output';
   fs.rmSync(adapterDir, { recursive: true, force: true });
   fs.mkdirSync(adapterDir, { recursive: true });
