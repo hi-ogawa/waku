@@ -461,17 +461,22 @@ export default function wakuPlugin(
       process.env.VERCEL
     ) &&
       wakuDeployVercelPlugin({
-        serverless: !!wakuFlags['with-vercel'],
         wakuConfig,
+        serverless: !!wakuFlags['with-vercel'],
       }),
     !!(
       wakuFlags['with-netlify'] ||
       wakuFlags['with-netlify-static'] ||
       process.env.NETLIFY
-    ) && wakuDeployNetlifyPlugin(),
-    !!wakuFlags['with-cloudflare'] && wakuDeployCloudflarePlugin(),
-    !!wakuFlags['with-partykit'] && wakuDeployPartykitPlugin(),
-    !!wakuFlags['with-deno'] && wakuDeployDenoPlugin(),
+    ) &&
+      wakuDeployNetlifyPlugin({
+        wakuConfig,
+        serverless: !!wakuFlags['with-netlify'],
+      }),
+    !!wakuFlags['with-cloudflare'] &&
+      wakuDeployCloudflarePlugin({ wakuConfig }),
+    !!wakuFlags['with-partykit'] && wakuDeployPartykitPlugin({ wakuConfig }),
+    !!wakuFlags['with-deno'] && wakuDeployDenoPlugin({ wakuConfig }),
     !!wakuFlags['with-aws-lambda'] && wakuDeployAwsLambdaPlugin({ wakuConfig }),
   ];
 }

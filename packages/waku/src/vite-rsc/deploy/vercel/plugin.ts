@@ -6,8 +6,8 @@ import type { Config } from '../../../config.js';
 const SERVE_JS = 'serve-vercel.js';
 
 export function wakuDeployVercelPlugin(deployOptions: {
-  serverless: boolean;
   wakuConfig: Required<Config>;
+  serverless: boolean;
 }): Plugin {
   return {
     name: 'waku:deploy-vercel',
