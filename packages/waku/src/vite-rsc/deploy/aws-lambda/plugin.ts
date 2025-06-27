@@ -7,14 +7,13 @@ const SERVE_JS = 'serve-aws-lambda.js';
 
 export function wakuDeployAwsLambdaPlugin(deployOptions: {
   wakuConfig: Required<Config>;
+  streaming: boolean;
 }): Plugin {
+  process.env.DEPLOY_AWS_LAMBDA_STREAMING;
   return {
     name: 'waku:deploy-aws-lambda',
     config() {
       return {
-        define: {
-          'import.meta.env.WAKU_SERVE_STATIC': JSON.stringify(true),
-        },
         environments: {
           rsc: {
             build: {
@@ -23,6 +22,11 @@ export function wakuDeployAwsLambdaPlugin(deployOptions: {
                   index: 'waku/vite-rsc/deploy/aws-lambda/entry',
                 },
               },
+            },
+            define: {
+              'import.meta.env.WAKU_AWS_LAMBDA_STREAMING': JSON.stringify(
+                deployOptions.streaming,
+              ),
             },
           },
         },
@@ -38,7 +42,7 @@ export function wakuDeployAwsLambdaPlugin(deployOptions: {
         const opts = deployOptions.wakuConfig;
         writeFileSync(
           path.join(opts.distDir, SERVE_JS),
-          `export { default } from './rsc/index.js';\n`,
+          `export { handler } from './rsc/index.js';\n`,
         );
         writeFileSync(
           path.join(opts.distDir, 'package.json'),

@@ -477,7 +477,11 @@ export default function wakuPlugin(
       wakuDeployCloudflarePlugin({ wakuConfig }),
     !!wakuFlags['with-partykit'] && wakuDeployPartykitPlugin({ wakuConfig }),
     !!wakuFlags['with-deno'] && wakuDeployDenoPlugin({ wakuConfig }),
-    !!wakuFlags['with-aws-lambda'] && wakuDeployAwsLambdaPlugin({ wakuConfig }),
+    !!wakuFlags['with-aws-lambda'] &&
+      wakuDeployAwsLambdaPlugin({
+        wakuConfig,
+        streaming: process.env.DEPLOY_AWS_LAMBDA_STREAMING === 'true',
+      }),
   ];
 }
 
