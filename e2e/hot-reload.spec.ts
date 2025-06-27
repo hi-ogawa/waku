@@ -34,8 +34,7 @@ test.describe.serial('hot reload', () => {
     'HMR is not available in production mode',
   );
   test.beforeAll(async () => {
-    ({ port, stopApp, fixtureDir: standaloneDir } = await startApp('DEV'));
-    // ({ port, stopApp, standaloneDir } = await startApp('DEV'));
+    ({ port, stopApp, standaloneDir } = await startApp('DEV'));
   });
   test.afterAll(async () => {
     await stopApp();
