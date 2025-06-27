@@ -279,6 +279,7 @@ export default function wakuPlugin(
       return `
         export const config = ${JSON.stringify({ ...wakuConfig, vite: undefined })};
         export const flags = ${JSON.stringify(wakuFlags)};
+        export const isBuild = ${JSON.stringify(this.environment.mode === 'build')};
       `;
     }),
     {

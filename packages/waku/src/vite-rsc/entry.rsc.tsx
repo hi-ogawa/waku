@@ -19,6 +19,7 @@ import type {
 } from '../lib/middleware/types.js';
 import { middlewares } from 'virtual:vite-rsc-waku/middlewares';
 import type { MiddlewareHandler } from 'hono';
+import { config, isBuild } from 'virtual:vite-rsc-waku/config';
 
 // TODO: refactor
 
@@ -29,7 +30,7 @@ import type { MiddlewareHandler } from 'hono';
 // cf. packages/waku/src/lib/hono/engine.ts
 export function createHonoHandler(): MiddlewareHandler {
   let middlwareOptions: MiddlewareOptions;
-  if (import.meta.env.DEV) {
+  if (!isBuild) {
     middlwareOptions = {
       cmd: 'dev',
       env: {},
@@ -171,10 +172,7 @@ function createRenderUtils({
 // cf. `getInput` in packages/waku/src/lib/middleware/handler.ts
 async function getInput(ctx: HandlerContext) {
   const url = ctx.req.url;
-  const rscPathPrefix =
-    import.meta.env.WAKU_CONFIG_BASE_PATH +
-    import.meta.env.WAKU_CONFIG_RSC_BASE +
-    '/';
+  const rscPathPrefix = config.basePath + config.rscBase + '/';
   let rscPath: string | undefined;
   let temporaryReferences: unknown | undefined;
   let input: HandleRequestInput;
@@ -323,10 +321,7 @@ export async function handleBuild() {
     renderHtml: renderUtils.renderHtml,
     rscPath2pathname: (rscPath) => {
       0 && console.log('[rscPath2pathname]', { rscPath });
-      return joinPath(
-        import.meta.env.WAKU_CONFIG_RSC_BASE,
-        encodeRscPath(rscPath),
-      );
+      return joinPath(config.rscBase, encodeRscPath(rscPath));
     },
     unstable_collectClientModules: async (elements) => {
       0 && console.log('[unstable_collectClientModules]', { elements });
