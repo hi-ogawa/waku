@@ -109,9 +109,6 @@ export default function wakuPlugin(
             'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify(
               wakuConfig.rscBase,
             ),
-            'import.meta.env.WAKU_SERVE_STATIC': JSON.stringify(
-              env.command === 'build',
-            ),
           },
           environments: {
             client: toEnvironmentOption('entry.browser'),
@@ -475,7 +472,7 @@ export default function wakuPlugin(
     !!wakuFlags['with-cloudflare'] && wakuDeployCloudflarePlugin(),
     !!wakuFlags['with-partykit'] && wakuDeployPartykitPlugin(),
     !!wakuFlags['with-deno'] && wakuDeployDenoPlugin(),
-    !!wakuFlags['with-aws-lambda'] && wakuDeployAwsLambdaPlugin(),
+    !!wakuFlags['with-aws-lambda'] && wakuDeployAwsLambdaPlugin({ wakuConfig }),
   ];
 }
 
