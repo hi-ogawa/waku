@@ -21,10 +21,8 @@ import { middlewares } from 'virtual:vite-rsc-waku/middlewares';
 import type { MiddlewareHandler } from 'hono';
 import { config, isBuild } from 'virtual:vite-rsc-waku/config';
 
-// TODO: refactor
-
 //
-// server handler entry point
+// main server handler as hono middleware
 //
 
 // cf. packages/waku/src/lib/hono/engine.ts
@@ -50,7 +48,7 @@ export function createHonoHandler(): MiddlewareHandler {
     };
   }
 
-  // assume main builtin handlers are always enabled
+  // assume builtin handlers are always enabled
   const allMiddlewares: Middleware[] = [
     context,
     ...middlewares,
