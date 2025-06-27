@@ -3,6 +3,8 @@ import path from 'node:path';
 import { rmSync, cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import type { Config } from '../../../config.js';
 
+const SERVE_JS = 'serve-vercel.js';
+
 export function wakuDeployVercelPlugin(deployOptions: {
   serverless: boolean;
   wakuConfig: Required<Config>;
@@ -19,7 +21,8 @@ export function wakuDeployVercelPlugin(deployOptions: {
             build: {
               rollupOptions: {
                 input: {
-                  vercel: 'waku/vite-rsc/deploy/vercel/entry',
+                  [SERVE_JS.split('.')[0]!]:
+                    'waku/vite-rsc/deploy/vercel/entry',
                 },
               },
             },
@@ -77,7 +80,7 @@ export function wakuDeployVercelPlugin(deployOptions: {
             handler: normalizePath(
               path.relative(
                 process.cwd(),
-                path.join(config.environments.rsc!.build.outDir, 'vercel.js'),
+                path.join(config.environments.rsc!.build.outDir, SERVE_JS),
               ),
             ),
             launcherType: 'Nodejs',
