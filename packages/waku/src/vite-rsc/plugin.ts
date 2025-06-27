@@ -144,7 +144,7 @@ export default function wakuPlugin(
 
         return viteRscConfig;
       },
-      configEnvironment(name, config, _env) {
+      configEnvironment(name, config, env) {
         // make @hiogawa/vite-rsc usable as a transitive dependency
         // https://github.com/hi-ogawa/vite-plugins/issues/968
         if (config.optimizeDeps?.include) {
@@ -169,7 +169,7 @@ export default function wakuPlugin(
 
         return {
           resolve: {
-            noExternal: [PKG_NAME],
+            noExternal: env.command === 'build' ? true : [PKG_NAME],
           },
           optimizeDeps: {
             include: name === 'ssr' ? [`${PKG_NAME} > html-react-parser`] : [],
