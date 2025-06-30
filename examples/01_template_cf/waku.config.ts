@@ -1,6 +1,5 @@
-import { defineConfig } from "waku/config";
-import { cloudflare } from "@cloudflare/vite-plugin"
-// import { __fix_cloudflare } from "@hiogawa/vite-rsc/plugin";
+import { defineConfig } from 'waku/config';
+import { cloudflare } from '@cloudflare/vite-plugin';
 
 export default defineConfig({
   vite: {
@@ -8,9 +7,14 @@ export default defineConfig({
       cloudflare({
         viteEnvironment: {
           name: 'rsc',
-        }
+        },
       }),
-      // __fix_cloudflare(),
+      {
+        name: 'waku-cf-wip',
+        config(config) {
+          config;
+        },
+      },
     ],
-  }
-})
+  },
+});
