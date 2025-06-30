@@ -82,7 +82,7 @@ export interface Config {
    * for how to configure or enable plugins per environment.
    */
   vite?: UserConfig | undefined;
-  viteRsc?: Parameters<typeof rsc>[0]
+  viteRsc?: Parameters<typeof rsc>[0];
 }
 
 export function defineConfig(config: Config) {
