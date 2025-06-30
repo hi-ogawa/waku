@@ -1,0 +1,28 @@
+{
+  "name": "01_template_cf",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "waku dev --experimental-vite-rsc",
+    "build": "waku build --experimental-vite-rsc",
+    "start": "waku start --experimental-vite-rsc"
+  },
+  "dependencies": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-server-dom-webpack": "19.1.0",
+    "waku": "0.23.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "https://pkg.pr.new/@cloudflare/vite-plugin@45e97e8",
+    "@hiogawa/vite-rsc": "0.4.6",
+    "@tailwindcss/postcss": "4.1.10",
+    "@types/react": "19.1.8",
+    "@types/react-dom": "19.1.6",
+    "postcss": "8.5.6",
+    "tailwindcss": "4.1.10",
+    "typescript": "5.8.3",
+    "wrangler": "https://pkg.pr.new/wrangler@45e97e8"
+  }
+}
