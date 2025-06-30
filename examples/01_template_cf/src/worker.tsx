@@ -1,9 +1,9 @@
-import handler from 'waku/vite-rsc/entry.rsc';
+import { createHonoHandler } from 'waku/vite-rsc/entry.rsc';
+import { Hono } from 'hono';
+
+const app = new Hono();
+app.use(createHonoHandler());
 
 export default {
-  async fetch(request: Request, env: any, ctx: any): Promise<Response> {
-    // you can setup you own AsyncLocalStorage to expose env and ctx
-    handler;
-    return new Response('ok');
-  },
+  fetch: app.fetch,
 };

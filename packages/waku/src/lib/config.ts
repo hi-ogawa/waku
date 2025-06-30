@@ -22,6 +22,7 @@ export async function resolveConfigDev(config: Config) {
     unstable_honoEnhancer: undefined,
     unstable_viteConfigs: undefined,
     vite: undefined,
+    viteRsc: undefined,
     ...config,
   };
   return configDev;

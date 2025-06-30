@@ -1,5 +1,6 @@
 import type { UserConfig } from 'vite';
 import type { Middleware } from './lib/middleware/types.js';
+import type rsc from '@hiogawa/vite-rsc/plugin';
 
 export type { Middleware };
 
@@ -81,6 +82,7 @@ export interface Config {
    * for how to configure or enable plugins per environment.
    */
   vite?: UserConfig | undefined;
+  viteRsc?: Parameters<typeof rsc>[0]
 }
 
 export function defineConfig(config: Config) {

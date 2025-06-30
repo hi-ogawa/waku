@@ -643,6 +643,9 @@ importers:
 
   examples/01_template_cf:
     dependencies:
+      hono:
+        specifier: 4.8.3
+        version: 4.8.3
       react:
         specifier: 19.1.0
         version: 19.1.0

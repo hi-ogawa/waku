@@ -69,6 +69,7 @@ export default function wakuPlugin(
     unstable_honoEnhancer: undefined,
     unstable_viteConfigs: undefined,
     vite: undefined,
+    viteRsc: undefined,
     ...wakuPluginOptions?.config,
   };
   const wakuFlags = wakuPluginOptions?.flags ?? {};
