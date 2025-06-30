@@ -21,7 +21,7 @@ import {
 } from '../lib/plugins/vite-plugin-rsc-managed.js';
 import { wakuDeployVercelPlugin } from './deploy/vercel/plugin.js';
 import { wakuAllowServerPlugin } from './plugins/allow-server.js';
-import { DIST_PUBLIC } from '../lib/builder/constants.js';
+import { DIST_PUBLIC, EXTENSIONS } from '../lib/builder/constants.js';
 import { fsRouterTypegenPlugin } from '../lib/plugins/vite-plugin-fs-router-typegen.js';
 import { wakuDeployNetlifyPlugin } from './deploy/netlify/plugin.js';
 import { wakuDeployCloudflarePlugin } from './deploy/cloudflare/plugin.js';
@@ -494,6 +494,48 @@ if (import.meta.hot) {
         }
       },
     },
+    createVirtualPlugin("waku/fs-router-files", async function () {
+      const options = wakuConfig;
+      const [
+        { readdir },
+        { join, dirname, extname, sep },
+        { fileURLToPath },
+      ] = await Promise.all([
+        import('node:fs/promises'),
+        import('node:path'),
+        import('node:url'),
+      ]);
+      const pagesDir = join(
+        dirname(fileURLToPath(importMetaUrl)),
+        options.pagesDir,
+      );
+      let files = await readdir(pagesDir, {
+        encoding: 'utf8',
+        recursive: true,
+      });
+      files = files!.flatMap((file) => {
+        const myExt = extname(file);
+        const myExtIndex = EXTENSIONS.indexOf(myExt);
+        if (myExtIndex === -1) {
+          return [];
+        }
+        // HACK: replace "_slug_" to "[slug]" for build
+        file = file.replace(/(?<=^|\/|\\)_([^/]+)_(?=\/|\\|\.)/g, '[$1]');
+        // For Windows
+        file = sep === '/' ? file : file.replace(/\\/g, '/');
+        // HACK: resolve different extensions for build
+        const exts = [myExt, ...EXTENSIONS];
+        exts.splice(myExtIndex + 1, 1); // remove the second myExt
+        for (const ext of exts) {
+          const f = file.slice(0, -myExt.length) + ext;
+          if (loadPage(f)?.catch(() => {})) {
+            return [f];
+          }
+        }
+        throw new Error('Failed to resolve ' + file);
+      });
+
+    }),
     fsRouterTypegenPlugin({ srcDir: wakuConfig.srcDir }),
     !!(
       wakuFlags['with-vercel'] ||
