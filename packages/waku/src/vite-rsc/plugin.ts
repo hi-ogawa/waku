@@ -7,7 +7,7 @@ import {
   type UserConfig,
 } from 'vite';
 import react from '@vitejs/plugin-react';
-import rsc from '@vitejs/plugin-rsc/plugin';
+import rsc from '@vitejs/plugin-rsc';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import assert from 'node:assert/strict';
