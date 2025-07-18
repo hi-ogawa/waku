@@ -18,25 +18,85 @@ export async function renderHTML(
 ): Promise<ReadableStream<Uint8Array>> {
   // cf. packages/waku/src/lib/renderers/html.ts `renderHtml`
 
-  const [stream1, stream2] = rscStream.tee();
+  let [stream1, stream2] = rscStream.tee();
+
+  // TODO: debug stream
+  // let decoder = new TextDecoder();
+  // stream1 = stream1.pipeThrough(
+  //   new TransformStream({
+  //     transform(chunk, controller) {
+  //       console.log("🔶", decoder.decode(chunk));
+  //       controller.enqueue(chunk);
+  //     },
+  //   }),
+  // );
+  // rscHtmlStream = rscHtmlStream.pipeThrough(
+  //   new TransformStream({
+  //     transform(chunk, controller) {
+  //       console.log("🔷", decoder.decode(chunk));
+  //       controller.enqueue(chunk);
+  //     },
+  //   }),
+  // );
 
   let elementsPromise: Promise<RscElementsPayload>;
   let htmlPromise: Promise<RscHtmlPayload>;
+  let htmlResolved = await ReactClient.createFromReadableStream<RscHtmlPayload>(rscHtmlStream);
 
   // deserialize RSC stream back to React VDOM
   function SsrRoot() {
     // RSC stream needs to be deserialized inside SSR component
     // for ReactDomServer preinit/preload (e.g. client reference modulepreload, css)
-    elementsPromise ??=
-      ReactClient.createFromReadableStream<RscElementsPayload>(stream1);
-    htmlPromise ??=
-      ReactClient.createFromReadableStream<RscHtmlPayload>(rscHtmlStream);
-    return (
-      <INTERNAL_ServerRoot elementsPromise={elementsPromise}>
-        {React.use(htmlPromise)}
-      </INTERNAL_ServerRoot>
-    );
+    // elementsPromise ??= ReactClient.createFromReadableStream<RscElementsPayload>(stream1)
+    elementsPromise ??= Promise.resolve("xxxxxxxxx") as any;
+    // elementsPromise ??=
+    //   Promise.resolve(Promise.resolve(ReactClient.createFromReadableStream<RscElementsPayload>(stream1)));
+    // elementsPromise ??= new Promise(r => setTimeout(() => r(ReactClient.createFromReadableStream<RscElementsPayload>(stream1)), 100))
+    // elementsPromise ??= new Promise(r => setTimeout(() => r(ReactClient.createFromReadableStream<RscElementsPayload>(stream1)), 100))
+    // console.log("🔷🔷🔷🔷", { elementsPromise })
+    // htmlPromise ??=
+    //   ReactClient.createFromReadableStream<RscHtmlPayload>(rscHtmlStream);
+    // const html = React.use(htmlPromise);
+    // console.log("[SsrRoot:React.use(htmlPromise)]", html)
+
+    // function Inner() {
+    //   htmlPromise ??=
+    //     ReactClient.createFromReadableStream<RscHtmlPayload>(rscHtmlStream);
+    //   return React.use(htmlPromise);
+    // }
+    return <React.Suspense>
+      <UseElements elementsPromise={elementsPromise} />
+    </React.Suspense>
+    // return <UseElements elementsPromise={elementsPromise} />
+    // return (
+    //   <INTERNAL_ServerRoot elementsPromise={elementsPromise}>
+    //     {/* {htmlResolved} */}
+    //     {/* {html} */}
+    //     {/* {React.use(htmlPromise)} */}
+    //   </INTERNAL_ServerRoot>
+    // );
   }
+
+  function UseElements(props: { elementsPromise: Promise<RscElementsPayload> }) {
+    React.use(props.elementsPromise);
+    return <div>
+      {/* <TestClient /> */}
+      <TestClientLazy />
+      {/* {props.children} */}
+    </div>
+  }
+
+  let testPromise = Promise.resolve("ok");
+
+
+  function TestClient() {
+    // const data = React.use(props.serverPromise);
+    const data = React.use(testPromise);
+    console.log("[React.use(props.serverPromise)]", data);
+    return <div>[React.use(props.serverPromise): {data}]</div>
+  }
+
+  const TestClientLazy = React.lazy(async () => ({ default: TestClient }))
 
   // render html (traditional SSR)
   const bootstrapScriptContent =
@@ -44,9 +104,9 @@ export async function renderHTML(
 
   function renderHtmlInner() {
     return ReactDOMServer.renderToReadableStream(<SsrRoot />, {
-      bootstrapScriptContent:
-        getBootstrapPreamble({ rscPath: options?.rscPath || '' }) +
-        bootstrapScriptContent,
+      // bootstrapScriptContent:
+      //   getBootstrapPreamble({ rscPath: options?.rscPath || '' }) +
+      //   bootstrapScriptContent,
       nonce: options?.nonce,
       onError: (e: unknown) => {
         if (
@@ -82,7 +142,7 @@ export async function renderHTML(
 }
 
 // see https://github.com/wakujs/waku/pull/1534
-let hackSsrRetry = 1;
+let hackSsrRetry = 0;
 
 function withHackSsrRetry<F extends (...args: any[]) => Promise<any>>(
   fn: F,

@@ -303,7 +303,8 @@ export const Root = ({
 export const useRefetch = () => use(RefetchContext);
 
 const ChildrenContext = createContext<ReactNode>(undefined);
-const ChildrenContextProvider = memo(ChildrenContext);
+// const ChildrenContextProvider = memo(ChildrenContext);
+const ChildrenContextProvider = ChildrenContext.Provider;
 
 export const Children = () => use(ChildrenContext);
 
@@ -338,6 +339,7 @@ export const Slot = ({
 }) => {
   const elementsPromise = useElementsPromise_UNSTABLE();
   const elements = use(elementsPromise);
+  console.log('[Slot:use(elementsPromise)]', { id, elements });
   if (id in elements && elements[id] === undefined) {
     throw new Error('Element cannot be undefined, use null instead: ' + id);
   }
@@ -346,13 +348,25 @@ export const Slot = ({
   if (!isValidElement) {
     throw new Error('Invalid element: ' + id);
   }
-  return createElement(
-    ChildrenContextProvider,
-    { value: children },
-    // FIXME is there `isReactNode` type checker?
-    element as ReactNode,
-  );
+  return element;
+  // return createElement(
+  //   ChildrenContextProvider,
+  //   { value: children },
+  //   // FIXME is there `isReactNode` type checker?
+  //   element as ReactNode,
+  // );
 };
+
+const internalUseMap = new WeakMap();
+
+function useInternal<T>(thenable: Promise<T>): T {
+  if (internalUseMap.has(thenable)) {
+    return internalUseMap.get(thenable) as T;
+  }
+  const value = use(thenable);
+  internalUseMap.set(thenable, value);
+  return value;
+}
 
 /**
  * ServerRoot for SSR
