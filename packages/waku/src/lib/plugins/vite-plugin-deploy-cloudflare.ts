@@ -1,10 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import {
-  copyFileSync,
-  mkdirSync,
-  readdirSync,
-  rmSync,
-} from 'node:fs';
+import { copyFileSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 

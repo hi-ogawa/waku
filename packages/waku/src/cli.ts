@@ -7,7 +7,6 @@ const require = createRequire(new URL('.', import.meta.url));
 
 dotenv.config({ path: ['.env.local', '.env'], quiet: true });
 
-
 const { values, positionals } = parseArgs({
   args: process.argv.slice(2),
   allowPositionals: true,
@@ -74,7 +73,6 @@ if (values.version) {
   displayUsage();
 }
 
-
 function displayUsage() {
   console.log(`
 Usage: waku [options] <command>
@@ -96,4 +94,3 @@ Options:
   -h, --help            Display this help message
 `);
 }
-
