@@ -13,7 +13,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { Config } from '../config.js';
-import { unstable_getBuildOptions } from '../server.js';
+import { INTERNAL_setAllEnv, unstable_getBuildOptions } from '../server.js';
 import { emitStaticFile, waitForTasks } from '../lib/builder/build.js';
 import {
   getManagedEntries,
@@ -118,8 +118,7 @@ export default function wakuPlugin(
     rsc({
       serverHandler: false,
       keepUseCientProxy: true,
-      ignoredPackageWarnings: [PKG_NAME, 'waku-jotai'],
-      frameworkPackages: ['react', 'waku'],
+      ignoredPackageWarnings: [/.*/],
     }),
     {
       name: 'rsc:waku',
@@ -131,6 +130,20 @@ export default function wakuPlugin(
             ),
             'import.meta.env.WAKU_CONFIG_RSC_BASE': JSON.stringify(
               wakuConfig.rscBase,
+            ),
+            // packages/waku/src/lib/plugins/vite-plugin-rsc-env.ts
+            // CLI has loaded dotenv already at this point
+            ...Object.fromEntries(
+              Object.entries(process.env).flatMap(([k, v]) =>
+                k.startsWith('WAKU_PUBLIC_')
+                  ? [
+                      [`import.meta.env.${k}`, JSON.stringify(v)],
+                      // TODO: defining `process.env` on client dev is not recommended.
+                      // see https://github.com/vitest-dev/vitest/pull/6718
+                      [`process.env.${k}`, JSON.stringify(v)],
+                    ]
+                  : [],
+              ),
             ),
           },
           environments: {
@@ -163,7 +176,7 @@ export default function wakuPlugin(
               build: {
                 rollupOptions: {
                   input: {
-                    index: path.join(__dirname, 'entry.rsc.node.js'),
+                    index: path.join(__dirname, 'entry.rsc.js'),
                   },
                 },
               },
@@ -518,6 +531,7 @@ if (import.meta.hot) {
           );
 
           // run `handleBuild`
+          INTERNAL_setAllEnv(process.env as any);
           unstable_getBuildOptions().unstable_phase = 'emitStaticFiles';
           const buildConfigs = await entry.handleBuild();
           for await (const buildConfig of buildConfigs || []) {
@@ -549,6 +563,7 @@ if (import.meta.hot) {
         },
       },
     },
+    // packages/waku/src/lib/plugins/vite-plugin-rsc-private.ts
     {
       name: 'rsc:private-dir',
       load(id) {

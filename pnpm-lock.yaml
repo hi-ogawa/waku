@@ -416,6 +416,9 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
+      vite:
+        specifier: 7.0.5
+        version: 7.0.5(@types/node@24.0.15)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(tsx@4.19.4)(yaml@2.8.0)
 
   e2e/fixtures/ssr-catch-error:
     dependencies:
@@ -594,8 +597,8 @@ importers:
         specifier: latest
         version: link:../../../packages/waku
       waku-jotai:
-        specifier: 0.0.1
-        version: 0.0.1(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))(waku@packages+waku)
+        specifier: 0.0.2
+        version: 0.0.2(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))(react@19.1.0)(waku@packages+waku)
     devDependencies:
       '@types/react':
         specifier: ^19.1.8
@@ -894,8 +897,8 @@ importers:
         specifier: 0.23.6
         version: link:../../packages/waku
       waku-jotai:
-        specifier: 0.0.1
-        version: 0.0.1(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))(waku@packages+waku)
+        specifier: 0.0.2
+        version: 0.0.2(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))(react@19.1.0)(waku@packages+waku)
     devDependencies:
       '@tailwindcss/postcss':
         specifier: 4.1.11
@@ -1570,8 +1573,8 @@ importers:
         specifier: 0.23.6
         version: link:../../packages/waku
       waku-jotai:
-        specifier: 0.0.1
-        version: 0.0.1(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))(waku@packages+waku)
+        specifier: 0.0.2
+        version: 0.0.2(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))(react@19.1.0)(waku@packages+waku)
     devDependencies:
       '@types/react':
         specifier: 19.1.8
@@ -1628,8 +1631,8 @@ importers:
         specifier: 4.7.0
         version: 4.7.0(vite@7.0.5(@types/node@24.0.15)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(tsx@4.19.4)(yaml@2.8.0))
       '@vitejs/plugin-rsc':
-        specifier: https://pkg.pr.new/@vitejs/plugin-rsc@608
-        version: https://pkg.pr.new/@vitejs/plugin-rsc@608(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(vite@7.0.5(@types/node@24.0.15)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(tsx@4.19.4)(yaml@2.8.0))
+        specifier: 0.4.12
+        version: 0.4.12(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(vite@7.0.5(@types/node@24.0.15)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(tsx@4.19.4)(yaml@2.8.0))
       dotenv:
         specifier: 17.2.0
         version: 17.2.0
@@ -3582,9 +3585,8 @@ packages:
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
 
-  '@vitejs/plugin-rsc@https://pkg.pr.new/@vitejs/plugin-rsc@608':
-    resolution: {tarball: https://pkg.pr.new/@vitejs/plugin-rsc@608}
-    version: 0.4.12
+  '@vitejs/plugin-rsc@0.4.12':
+    resolution: {integrity: sha512-sEr+l2gLAdCYf77eNO69Ef+bXpVB/rzvPUDl+qJT/3GQNzuwo1zPvKfFxnfNKSep2x0EzXr2t5BLnKvxj8Rjkg==}
     peerDependencies:
       react: '*'
       react-dom: '*'
@@ -7382,11 +7384,12 @@ packages:
       jsdom:
         optional: true
 
-  waku-jotai@0.0.1:
-    resolution: {integrity: sha512-CCBBSOcWDSNIo0VcmjDfLeYioDffxdLgT967B0q3QYPrGa4X7s1qRq76loVZ4eP0vsawtlIYAiwS2Kk3g3oTYg==}
+  waku-jotai@0.0.2:
+    resolution: {integrity: sha512-DcwIut36uSl9oiziCQaoK39A9n+9DvbQj/tDW171AzmSzH24hXvlM1PooUbiEmewBUDPl0jHv37hX6A8Cuw8pA==}
     peerDependencies:
       jotai: '>=2.0.0'
-      waku: '>=0.23.4'
+      react: '>=19.0.0'
+      waku: '>=0.23.6'
 
   watchpack@2.4.4:
     resolution: {integrity: sha512-c5EGNOiyxxV5qmTtAB7rbiXxi1ooX1pQKMLX/MIabJjRA0SJBQOjKF+KSVfHkr9U1cADPon0mRiVe/riyaiDUA==}
@@ -9368,7 +9371,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vitejs/plugin-rsc@https://pkg.pr.new/@vitejs/plugin-rsc@608(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(vite@7.0.5(@types/node@24.0.15)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(tsx@4.19.4)(yaml@2.8.0))':
+  '@vitejs/plugin-rsc@0.4.12(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(vite@7.0.5(@types/node@24.0.15)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)(tsx@4.19.4)(yaml@2.8.0))':
     dependencies:
       '@mjackson/node-fetch-server': 0.7.0
       es-module-lexer: 1.7.0
@@ -13773,9 +13776,10 @@ snapshots:
       - tsx
       - yaml
 
-  waku-jotai@0.0.1(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))(waku@packages+waku):
+  waku-jotai@0.0.2(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))(react@19.1.0)(waku@packages+waku):
     dependencies:
       jotai: 2.12.5(@types/react@19.1.8)(react@19.1.0)
+      react: 19.1.0
       waku: link:packages/waku
 
   watchpack@2.4.4:

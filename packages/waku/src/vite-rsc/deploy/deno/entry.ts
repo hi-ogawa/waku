@@ -4,15 +4,17 @@
 import { Hono } from 'jsr:@hono/hono';
 // @ts-expect-error deno
 import { serveStatic } from 'jsr:@hono/hono/deno';
-import { createHonoHandler } from '../../entry.rsc.js';
+import { createHonoHandler } from '../../lib/rsc.js';
 import { honoEnhancer } from 'virtual:vite-rsc-waku/hono-enhancer';
 import { config } from 'virtual:vite-rsc-waku/config';
 import path from 'node:path';
 import { DIST_PUBLIC } from '../../../lib/builder/constants.js';
+import { INTERNAL_setAllEnv } from '../../../server.js';
 
 declare let Deno: any;
 
 function createApp(app: Hono) {
+  INTERNAL_setAllEnv(Deno.env.toObject());
   app.use(serveStatic({ root: path.join(config.distDir, DIST_PUBLIC) }));
   app.use(createHonoHandler());
   app.notFound(async (c: any) => {
