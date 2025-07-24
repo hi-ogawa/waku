@@ -94,3 +94,7 @@ Options:
   -h, --help            Display this help message
 `);
 }
+
+export type HonoEnhancer = <Hono>(
+  fn: (app: Hono) => Hono,
+) => (app: Hono) => Hono;
