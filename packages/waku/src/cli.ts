@@ -41,6 +41,9 @@ const { values, positionals } = parseArgs({
     'experimental-compress': {
       type: 'boolean',
     },
+    'experimental-legacy-cli': {
+      type: 'boolean',
+    },
     port: {
       type: 'string',
       short: 'p',
