@@ -8,8 +8,8 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const SERVER_ENTRY = path.join(__dirname, 'entry.js');
 const SERVE_JS = 'serve-vercel.js';
 
-export function wakuDeployVercelPlugin(deployOptions: {
-  wakuConfig: Required<Config>;
+export function deployVercelPlugin(deployOptions: {
+  config: Required<Config>;
   serverless: boolean;
 }): Plugin {
   return {
@@ -29,18 +29,12 @@ export function wakuDeployVercelPlugin(deployOptions: {
         },
       };
     },
-    // "post ssr writeBundle" is a signal that the entire build is finished.
-    // this can be replaced with `buildApp` hook on Vite 7 https://github.com/vitejs/vite/pull/19971
-    writeBundle: {
+    buildApp: {
       order: 'post',
-      sequential: true,
-      async handler() {
-        if (this.environment.name !== 'ssr') {
-          return;
-        }
+      async handler(builder) {
         await build({
-          config: this.environment.getTopLevelConfig(),
-          opts: deployOptions.wakuConfig,
+          config: builder.config,
+          opts: deployOptions.config,
           serverless: deployOptions.serverless,
         });
       },

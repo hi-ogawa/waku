@@ -23,7 +23,12 @@ declare module 'virtual:vite-rsc-waku/hono-enhancer' {
 }
 
 declare module 'virtual:vite-rsc-waku/config' {
-  export const flags: import('./plugin.ts').WakuFlags;
+  export const flags: import('./plugin.ts').Flags;
   export const config: Required<import('../config.ts').Config>;
   export const isBuild: boolean;
+}
+
+declare module 'virtual:vite-rsc-waku/fallback-html' {
+  const default_: string;
+  export default default_;
 }

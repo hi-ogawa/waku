@@ -8,8 +8,8 @@ import { fileURLToPath } from 'node:url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const SERVER_ENTRY = path.join(__dirname, 'entry.js');
 
-export function wakuDeployNetlifyPlugin(deployOptions: {
-  wakuConfig: Required<Config>;
+export function deployNetlifyPlugin(deployOptions: {
+  config: Required<Config>;
   serverless: boolean;
 }): Plugin {
   return {
@@ -29,16 +29,12 @@ export function wakuDeployNetlifyPlugin(deployOptions: {
         },
       };
     },
-    writeBundle: {
+    buildApp: {
       order: 'post',
-      sequential: true,
-      async handler() {
-        if (this.environment.name !== 'ssr') {
-          return;
-        }
+      async handler(builder) {
         await build({
-          config: this.environment.getTopLevelConfig(),
-          opts: deployOptions.wakuConfig,
+          config: builder.config,
+          opts: deployOptions.config,
           serverless: deployOptions.serverless,
         });
       },

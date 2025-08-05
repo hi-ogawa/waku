@@ -13,8 +13,8 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const SERVER_ENTRY = path.join(__dirname, 'entry.js');
 const SERVE_JS = 'serve-partykit.js';
 
-export function wakuDeployPartykitPlugin(deployOptions: {
-  wakuConfig: Required<Config>;
+export function deployPartykitPlugin(deployOptions: {
+  config: Required<Config>;
 }): Plugin {
   return {
     name: 'waku:deploy-partykit',
@@ -49,16 +49,12 @@ export function wakuDeployPartykitPlugin(deployOptions: {
         },
       };
     },
-    writeBundle: {
+    buildApp: {
       order: 'post',
-      sequential: true,
-      async handler() {
-        if (this.environment.name !== 'ssr') {
-          return;
-        }
+      async handler(builder) {
         await build({
-          config: this.environment.getTopLevelConfig(),
-          opts: deployOptions.wakuConfig,
+          config: builder.config,
+          opts: deployOptions.config,
         });
       },
     },

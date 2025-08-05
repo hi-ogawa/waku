@@ -1,6 +1,6 @@
-import * as ReactServer from '@vitejs/plugin-rsc/rsc';
+import { renderToReadableStream } from '@vitejs/plugin-rsc/rsc';
 import { captureOwnerStack, type ReactNode } from 'react';
-import type { HandleRequest } from '../../../lib/types.js';
+import type { HandleRequest } from '../../lib/types.js';
 
 export type RscElementsPayload = Record<string, unknown>;
 export type RscHtmlPayload = ReactNode;
@@ -25,7 +25,7 @@ export function createRenderUtils({
 
   return {
     async renderRsc(elements) {
-      return ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
+      return renderToReadableStream<RscElementsPayload>(elements, {
         temporaryReferences,
         onError,
       });
@@ -37,15 +37,16 @@ export function createRenderUtils({
     ) {
       const ssrEntryModule = await loadSsrEntryModule();
 
-      const rscElementsStream =
-        ReactServer.renderToReadableStream<RscElementsPayload>(elements, {
+      const rscElementsStream = renderToReadableStream<RscElementsPayload>(
+        elements,
+        {
           onError,
-        });
-
-      const rscHtmlStream = ReactServer.renderToReadableStream<RscHtmlPayload>(
-        html,
-        { onError },
+        },
       );
+
+      const rscHtmlStream = renderToReadableStream<RscHtmlPayload>(html, {
+        onError,
+      });
 
       const htmlStream = await ssrEntryModule.renderHTML(
         rscElementsStream,
@@ -64,7 +65,9 @@ export function createRenderUtils({
 }
 
 export function loadSsrEntryModule() {
-  return import.meta.viteRsc.loadModule<typeof import('../ssr.js')>(
+  // This is an API to communicate between two server environments `rsc` and `ssr`.
+  // https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-rsc/README.md#importmetaviterscloadmodule
+  return import.meta.viteRsc.loadModule<typeof import('./ssr.js')>(
     'ssr',
     'index',
   );
