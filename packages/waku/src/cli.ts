@@ -62,6 +62,9 @@ const { values, positionals } = parseArgs({
       type: 'string',
       short: 'p',
     },
+    host: {
+      type: 'boolean',
+    },
     version: {
       type: 'boolean',
       short: 'v',

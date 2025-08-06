@@ -27,11 +27,11 @@ export async function cli(cmd: string, flags: Record<string, any>) {
       plugins: [mainPlugin(mainPluginOptions)],
       server: {
         port: parseInt(flags.port || '3000', 10),
+        host: flags.host || undefined,
       },
     });
     await server.listen();
-    const url = server.resolvedUrls!['local'];
-    console.log(`ready: Listening on ${url}`);
+    server.printUrls();
   }
 
   if (cmd === 'build') {
@@ -48,9 +48,9 @@ export async function cli(cmd: string, flags: Record<string, any>) {
       plugins: [mainPlugin(mainPluginOptions)],
       preview: {
         port: parseInt(flags.port || '8080', 10),
+        host: flags.host || undefined,
       },
     });
-    const url = server.resolvedUrls!['local'];
-    console.log(`ready: Listening on ${url}`);
+    server.printUrls();
   }
 }
