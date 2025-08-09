@@ -196,7 +196,7 @@ export function mainPlugin(
 
         return viteRscConfig;
       },
-      configEnvironment(name, environmentConfig, env) {
+      configEnvironment(name, environmentConfig) {
         // make @vitejs/plugin-rsc usable as a transitive dependency
         // by rewriting `optimizeDeps.include`. e.g.
         // include: ["@vitejs/plugin-rsc/vendor/xxx", "@vitejs/plugin-rsc > yyy"]
@@ -227,7 +227,7 @@ export function mainPlugin(
 
         return {
           resolve: {
-            noExternal: env.command === 'build' ? true : [PKG_NAME],
+            noExternal: [PKG_NAME],
           },
           optimizeDeps: {
             exclude: [PKG_NAME, 'waku/minimal/client', 'waku/router/client'],

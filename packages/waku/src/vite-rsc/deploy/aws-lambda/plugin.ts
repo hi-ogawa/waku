@@ -1,4 +1,8 @@
-import { type Plugin, type ResolvedConfig } from 'vite';
+import {
+  type EnvironmentOptions,
+  type Plugin,
+  type ResolvedConfig,
+} from 'vite';
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Config } from '../../../config.js';
@@ -15,9 +19,17 @@ export function deployAwsLambdaPlugin(deployOptions: {
   return {
     name: 'waku:deploy-aws-lambda',
     config() {
+      const serverOptions: EnvironmentOptions = {
+        resolve: {
+          noExternal: true,
+        },
+      };
+
       return {
         environments: {
+          ssr: serverOptions,
           rsc: {
+            ...serverOptions,
             build: {
               rollupOptions: {
                 input: {

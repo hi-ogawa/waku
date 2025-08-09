@@ -23,6 +23,7 @@ export function deployPartykitPlugin(deployOptions: {
       // https://github.com/cloudflare/workers-sdk/blob/869b7551d719ccfe3843c25e9907b74024458561/packages/vite-plugin-cloudflare/src/cloudflare-environment.ts#L131
       const serverOptions: EnvironmentOptions = {
         resolve: {
+          noExternal: true,
           conditions: [
             'workerd',
             'module',

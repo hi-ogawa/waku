@@ -1,4 +1,8 @@
-import { type Plugin, type ResolvedConfig } from 'vite';
+import {
+  type EnvironmentOptions,
+  type Plugin,
+  type ResolvedConfig,
+} from 'vite';
 import type { Config } from '../../../config.js';
 import path from 'node:path';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -15,9 +19,17 @@ export function deployNetlifyPlugin(deployOptions: {
   return {
     name: 'waku:deploy-netlify',
     config() {
+      const serverOptions: EnvironmentOptions = {
+        resolve: {
+          noExternal: true,
+        },
+      };
+
       return {
         environments: {
+          ssr: serverOptions,
           rsc: {
+            ...serverOptions,
             build: {
               rollupOptions: {
                 input: {

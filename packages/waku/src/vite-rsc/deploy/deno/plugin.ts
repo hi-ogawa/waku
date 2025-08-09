@@ -1,4 +1,8 @@
-import { type Plugin, type ResolvedConfig } from 'vite';
+import {
+  type EnvironmentOptions,
+  type Plugin,
+  type ResolvedConfig,
+} from 'vite';
 import type { Config } from '../../../config.js';
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -14,9 +18,17 @@ export function deployDenoPlugin(deployOptions: {
   return {
     name: 'waku:deploy-deno',
     config() {
+      const serverOptions: EnvironmentOptions = {
+        resolve: {
+          noExternal: true,
+        },
+      };
+
       return {
         environments: {
+          ssr: serverOptions,
           rsc: {
+            ...serverOptions,
             build: {
               rollupOptions: {
                 input: {

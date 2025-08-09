@@ -1,4 +1,8 @@
-import { type Plugin, type ResolvedConfig } from 'vite';
+import {
+  type EnvironmentOptions,
+  type Plugin,
+  type ResolvedConfig,
+} from 'vite';
 import path from 'node:path';
 import { rmSync, cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import type { Config } from '../../../config.js';
@@ -15,9 +19,17 @@ export function deployVercelPlugin(deployOptions: {
   return {
     name: 'waku:deploy-vercel',
     config() {
+      const serverOptions: EnvironmentOptions = {
+        resolve: {
+          noExternal: true,
+        },
+      };
+
       return {
         environments: {
+          ssr: serverOptions,
           rsc: {
+            ...serverOptions,
             build: {
               rollupOptions: {
                 input: {
