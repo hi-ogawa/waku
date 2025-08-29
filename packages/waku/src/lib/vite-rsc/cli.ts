@@ -6,6 +6,8 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+const logger = vite.createLogger(undefined, { prefix: '[waku]' });
+
 async function loadConfig(): Promise<Config | undefined> {
   let config: Config | undefined;
   if (existsSync('waku.config.ts') || existsSync('waku.config.js')) {
@@ -24,12 +26,33 @@ async function startDevServer(
   const server = await vite.createServer({
     configFile: false,
     plugins: [rscPlugin(rscPluginOptions)],
-    server: { port },
+    server: { port, host: false },
   });
   await server.listen();
-  const url = server.resolvedUrls!['local'];
-  port = Number(url[0]?.match(/:(\d+)/)?.[1]) || port;
-  console.log(`ready: Listening on ${url}`);
+  server.printUrls();
+  server.bindCLIShortcuts({
+    print: true,
+    customShortcuts: [
+      {
+        // overwrite vite's default server restart
+        key: 'r',
+        description: 'restart the server',
+        action: async () => {
+          logger.info('restarting server...', { timestamp: true });
+          await restartServer();
+        },
+      },
+    ],
+  });
+
+  async function restartServer() {
+    await server.close();
+    await startDevServer(port, {
+      ...rscPluginOptions,
+      config: await loadConfig(),
+    });
+  }
+
   const watcher = server.watcher;
   watcher.on('change', handleConfigChange);
   watcher.on('unlink', handleConfigChange);
@@ -42,12 +65,10 @@ async function startDevServer(
       dirname === process.cwd() &&
       (filename === 'waku.config.ts' || filename === 'waku.config.js')
     ) {
-      console.log(`Waku configuration file changed, restarting server...`);
-      await server.close();
-      await startDevServer(port, {
-        ...rscPluginOptions,
-        config: await loadConfig(),
+      logger.info(`configuration file changed, restarting server...`, {
+        timestamp: true,
       });
+      restartServer();
     }
   }
 }
