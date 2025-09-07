@@ -374,7 +374,7 @@ export const Slot = ({
     // See: https://github.com/wakujs/waku/pull/1545
     // isolate potential `lazy + React.use` usage inside `element` in its own component
     // https://github.com/facebook/react/issues/33937#issuecomment-3091349011
-    createElement(SlotElementWrapper, null, element as ReactNode),
+    <SlotElementWrapper>{element as ReactNode}</SlotElementWrapper>
   );
 };
 
