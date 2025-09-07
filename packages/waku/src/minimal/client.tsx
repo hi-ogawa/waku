@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  createElement,
   memo,
   startTransition,
   use,
@@ -21,12 +20,9 @@ const { createFromFetch, encodeReply, createTemporaryReferenceSet } =
   RSDWClient;
 
 const DEFAULT_HTML_HEAD = [
-  createElement('meta', { charSet: 'utf-8' }),
-  createElement('meta', {
-    name: 'viewport',
-    content: 'width=device-width, initial-scale=1',
-  }),
-  createElement('meta', { name: 'generator', content: 'Waku' }),
+  <meta charSet="utf-8" />,
+  <meta name="viewport" content="width=device-width, initial-scale=1" />,
+  <meta name="generator" content="Waku" />,
 ];
 
 const BASE_RSC_PATH = `${import.meta.env?.WAKU_CONFIG_BASE_PATH}${
@@ -306,19 +302,15 @@ export const Root = ({
     },
     [fetchCache],
   );
-  return createElement(
-    EnhanceFetchRscInternalContext,
-    { value: enhanceFetchRscInternal },
-    createElement(
-      RefetchContext,
-      { value: refetch },
-      createElement(
-        ElementsContext,
-        { value: elements },
-        ...DEFAULT_HTML_HEAD,
-        children,
-      ),
-    ),
+  return (
+    <EnhanceFetchRscInternalContext value={enhanceFetchRscInternal}>
+      <RefetchContext value={refetch}>
+        <ElementsContext value={elements}>
+          {...DEFAULT_HTML_HEAD}
+          {children}
+        </ElementsContext>
+      </RefetchContext>
+    </EnhanceFetchRscInternalContext>
   );
 };
 
@@ -368,13 +360,13 @@ export const Slot = ({
   if (!isValidElement) {
     throw new Error('Invalid element: ' + id);
   }
-  return createElement(
-    ChildrenContextProvider,
-    { value: children },
-    // See: https://github.com/wakujs/waku/pull/1545
-    // isolate potential `lazy + React.use` usage inside `element` in its own component
-    // https://github.com/facebook/react/issues/33937#issuecomment-3091349011
-    <SlotElementWrapper>{element as ReactNode}</SlotElementWrapper>
+  return (
+    <ChildrenContextProvider value={children}>
+      {/* See: https://github.com/wakujs/waku/pull/1545 */}
+      {/* isolate potential `lazy + React.use` usage inside `element` in its own component */}
+      {/* https://github.com/facebook/react/issues/33937#issuecomment-3091349011 */}
+      <SlotElementWrapper>{element as ReactNode}</SlotElementWrapper>
+    </ChildrenContextProvider>
   );
 };
 
@@ -392,10 +384,9 @@ export const INTERNAL_ServerRoot = ({
 }: {
   elementsPromise: Promise<Elements>;
   children: ReactNode;
-}) =>
-  createElement(
-    ElementsContext,
-    { value: elementsPromise },
-    ...DEFAULT_HTML_HEAD,
-    children,
-  );
+}) => (
+  <ElementsContext value={elementsPromise}>
+    {...DEFAULT_HTML_HEAD}
+    {children}
+  </ElementsContext>
+);
