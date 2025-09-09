@@ -8,6 +8,12 @@
   ],
   "headers": [
     {
+      "source": "/assets/(.*)",
+      "headers": {
+        "cache-control": "public, immutable, max-age=31536000"
+      }
+    },
+    {
       "source": "/RSC/(.*)",
       "headers": [
         {
