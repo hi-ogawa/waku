@@ -5,6 +5,12 @@ import type { ReactNode } from 'react';
 import { Providers } from '../components/providers';
 import { Analytics } from '../components/analytics';
 
+// https://fontsource.org/docs/getting-started/preload
+import fontUrlAlegreya from '@fontsource-variable/alegreya/files/alegreya-latin-wght-normal.woff2';
+import fontUrlNunito from '@fontsource-variable/nunito/files/nunito-latin-wght-normal.woff2';
+import fontUrlInter from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2';
+import fontUrlFiraCode from '@fontsource-variable/fira-code/files/fira-code-latin-wght-normal.woff2';
+
 type RootLayoutProps = { children: ReactNode };
 
 export default async function RootLayout({ children }: RootLayoutProps) {
@@ -36,6 +42,18 @@ const Meta = () => {
         type="image/png"
         href="https://cdn.candycode.com/waku/shinto-shrine.png"
       />
+      {[fontUrlAlegreya, fontUrlNunito, fontUrlInter, fontUrlFiraCode].map(
+        (href) => (
+          <link
+            key={href}
+            rel="preload"
+            href={href}
+            as="font"
+            type="font/woff2"
+            crossOrigin=""
+          />
+        ),
+      )}
     </>
   );
 };
